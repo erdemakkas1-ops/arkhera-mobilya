@@ -1,0 +1,8 @@
+dist/
+pages/
+instagram-raw/
+tools/frames/
+__pycache__/
+.vercel
+.env*
+.playwright-mcp/

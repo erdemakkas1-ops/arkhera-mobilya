@@ -92,6 +92,10 @@ em{font-style:italic}
 .scrim{position:absolute;inset:0;pointer-events:none;background:
   radial-gradient(120% 80% at 0% 100%,rgba(20,16,13,.78),rgba(20,16,13,0) 58%),
   linear-gradient(rgba(20,16,13,.62),rgba(20,16,13,0) 30%)}
+/* only while the headline shows: the window behind it is bright */
+.scrim-intro{background:linear-gradient(90deg,rgba(20,16,13,.88),rgba(20,16,13,.66) 36%,rgba(20,16,13,0) 64%);transition:opacity .5s}
+.scrim-intro.off{opacity:0}
+.film:not(.live) .scrim-intro{display:none}
 .intro{position:absolute;left:0;right:0;top:calc(var(--head) + env(safe-area-inset-top,0px) + clamp(28px,9vh,110px));max-width:44rem;transition:opacity .5s,transform .5s}
 .intro h1{font-size:clamp(3rem,7vw,6.6rem);line-height:.92;margin-top:18px}
 .intro h1 em{color:var(--brass)}
@@ -134,6 +138,7 @@ em{font-style:italic}
 }
 @media (max-width:760px){
   .scrim{background:linear-gradient(rgba(20,16,13,.84),rgba(20,16,13,.4) 40%,rgba(20,16,13,0) 56%),linear-gradient(0deg,rgba(20,16,13,.88),rgba(20,16,13,0) 36%)}
+  .scrim-intro{background:linear-gradient(rgba(20,16,13,.9),rgba(20,16,13,.72) 42%,rgba(20,16,13,0) 62%)}
   .intro{top:calc(var(--head) + env(safe-area-inset-top,0px) + 18px)}
   .intro h1{font-size:clamp(2.7rem,12.5vw,4rem)}
   .intro p{margin-top:14px;font-size:.98rem}
@@ -362,6 +367,7 @@ input[type=range]{width:100%;accent-color:var(--brass);min-height:32px}
         <i class="seam"></i>
       </div>
       <div class="scrim"></div>
+      <div class="scrim scrim-intro"></div>
 
       <div class="intro wrap">
         <p class="eyebrow">Arkhera Mobilya &amp; Dekorasyon · Ankara</p>
@@ -742,7 +748,7 @@ document.documentElement.classList.add('js');
     const smooth = (a, b, v) => { const x = clamp((v - a) / (b - a)); return x * x * (3 - 2 * x); };
     const stage = $('.stage', film), frames = $('.frames', film), seam = $('.seam', film);
     const f2 = $('.fr-2 img', film), f3 = $('.fr-3 img', film), f4 = $('.fr-4 img', film);
-    const intro = $('.intro', film), chaps = $$('.chap', film), endEl = $('.end', film), railBtns = $$('.rail button', film);
+    const intro = $('.intro', film), introShade = $('.scrim-intro', film), chaps = $$('.chap', film), endEl = $('.end', film), railBtns = $$('.rail button', film);
     const pt = s => s && s.split(',').map(Number);
     const tags = $$('.tag', film).map(el => ({ el, d: pt(el.dataset.d), m: pt(el.dataset.m), from: +el.dataset.from, to: +el.dataset.to }));
     const phone = matchMedia('(max-width:760px)');
@@ -756,7 +762,7 @@ document.documentElement.classList.add('js');
       seam.style.left = edge + '%'; seam.style.opacity = w > 0 && w < 1 ? 1 : 0;
       const s = 1.07 - .07 * t / T_END;
       frames.style.transform = `scale(${s.toFixed(4)})`;
-      intro.classList.toggle('off', t > .35);
+      intro.classList.toggle('off', t > .35); introShade.classList.toggle('off', t > .35);
       chaps.forEach(c => c.classList.toggle('on', t >= +c.dataset.from && t < +c.dataset.to));
       endEl.classList.toggle('on', t > 11.05);
       const ci = t < 2.35 ? 0 : t < 4.85 ? 1 : t < 8.3 ? 2 : 3;

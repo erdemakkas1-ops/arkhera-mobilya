@@ -30,8 +30,8 @@ FAVICON = (
 
 
 def share_image(dst):
-    # the film's closing frame, cropped to 1200 × 630
-    src = Image.open(os.path.join(ROOT, "img", "film-still.webp")).convert("RGB")
+    # the last film keyframe (finished room at dusk), cropped to 1200 × 630
+    src = Image.open(os.path.join(ROOT, "img", "film", "4-teslim.webp")).convert("RGB")
     w, h = 1200, 630
     scale = max(w / src.width, h / src.height)
     src = src.resize((round(src.width * scale), round(src.height * scale)), Image.LANCZOS)
@@ -73,7 +73,7 @@ def main():
         f.write(page)
     with open(os.path.join(DIST, "favicon.svg"), "w", encoding="utf-8") as f:
         f.write(FAVICON)
-    if os.path.exists(os.path.join(ROOT, "img", "film-still.webp")):
+    if os.path.exists(os.path.join(ROOT, "img", "film", "4-teslim.webp")):
         share_image(os.path.join(DIST, "og.jpg"))
     shutil.copytree(os.path.join(ROOT, "img"), os.path.join(DIST, "img"))
     shutil.copy(os.path.join(ROOT, "vercel.json"), DIST)

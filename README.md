@@ -16,34 +16,28 @@ cd pages && git add -A && git commit -m "Update site" && git push
 
 ## The film
 
-A live three.js (r180, from jsDelivr) living room built in code inside `arkhera.html`. It tells
-Arkhera's own process in four chapters:
+Four keyframes of one room from one camera (`img/film/`, 1920 × 1080 and 1080 × 1920 for phones),
+scrubbed by scroll over film seconds 0–12, telling Arkhera's own process:
 
-1. **Keşif & metraj** — top-down floor plan; walls and dimensions plot in on load, furniture
-   footprints draw as you scroll.
-2. **Proje & 3D** — the camera tilts down into the room while everything extrudes out of the plan
-   as a white clay model (a clipping plane rising in Y).
-3. **Özel üretim** — a scan line sweeps right to left, turning clay into finished materials
-   (walnut slats, Calacatta marble, travertine, bouclé, chevron oak). Annotations name the parts.
-4. **Anahtar teslim** — daylight turns to dusk, the hidden LED ceiling, unit LEDs and the arc lamp
-   come on; closing call to action.
+1. **Keşif & metraj** — the empty, unfinished room (`1-kesif`).
+2. **Proje & 3D** — fades to the same room as a white clay model (`2-proje`).
+3. **Özel üretim** — a brass scan line wipes right to left, revealing the finished room (`3-uretim`).
+4. **Anahtar teslim** — fades to dusk with the LEDs on (`4-teslim`); closing call to action.
 
-- Scroll position → film seconds 0–12; the film eases towards the scroll target and only renders
-  when something changed. Chapter captions use `data-from`/`data-to` in film seconds; annotation
-  tags use `data-at` (a 3D point in metres).
-- Materials are procedural canvas textures (no image downloads). Phones get pixel ratio 1.25 and
-  a 1024 shadow map.
-- `prefers-reduced-motion`, no WebGL2, or `?still` show a still closing frame and the four chapters
-  as text; three.js still loads for the configurator only.
-- `?capture` hides the overlays and exposes `__film.seek(t)`. Posters in `img/` (`film-poster*.webp`,
-  `film-still.webp`, `render-split.webp`) are captures: screenshot into `tools/frames/` as described in
-  `tools/posters.py`, then run it. Re-capture after changing the scene.
+- The frames are Gemini images (see `GEMINI.md` for the prompts and order). Until they arrive,
+  placeholders rendered from the earlier three.js scene (commit bc9c9c6) fill `img/film/`.
+  `py -3 tools/keyframes.py [folder]` crops and converts a set (default folder `gemini/`).
+- The whole stage pushes in slightly (scale 1.07 → 1). Chapter captions use `data-from`/`data-to`
+  in film seconds; annotation tags use `data-d` / `data-m`, a point on the desktop / phone image as
+  fractions of its width and height. Re-place them when the images change.
+- No WebGL in the opener: three.js loads only when the configurator is ~600 px away.
+- `prefers-reduced-motion`, no JS, or `?still` show the dusk frame and the four chapters as text.
 
 ## Other sections
 
 - Stüdyo, Projeler (sideways scroll on wide screens with a mouse, native swipe elsewhere),
   Hizmetler (the row in the middle of the screen lights up and swaps the picture).
-- **Ünite tasarla**: the film's TV unit (`buildWallUnit`, shared with the film) with width 180–440 cm,
+- **Ünite tasarla**: the opener's TV unit in 3D (`buildWallUnit`) with width 180–440 cm,
   body, centre panel, metal and LED options. "Teklif al" opens WhatsApp with the configuration.
 - Contact form writes a WhatsApp message (no server).
 

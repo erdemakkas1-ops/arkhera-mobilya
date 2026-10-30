@@ -261,11 +261,9 @@ em{font-style:italic}
 .cfg-head h2{grid-column:1/span 7;font-size:clamp(2.5rem,4.8vw,4.8rem);line-height:.98}
 .cfg-head p{grid-column:9/span 4;margin:0;align-self:end;color:var(--bone-dim)}
 .cfg-body{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:clamp(24px,3vw,48px);align-items:start}
-.cfg-view{position:relative;aspect-ratio:4/3;max-width:100%;background:#211a15;border-radius:2px;overflow:hidden;cursor:grab;touch-action:pan-y}
-.cfg-view:active{cursor:grabbing}
-.cfg-view canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-.cfg-view .note{position:absolute;left:14px;bottom:12px;font:500 .66rem/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--bone-dim);pointer-events:none}
-.cfg-view .dimw{position:absolute;font:500 .72rem/1 var(--f-mono);color:var(--brass);transform:translate(-50%,-50%);pointer-events:none;white-space:nowrap}
+.cfg-view{position:relative;aspect-ratio:4/3;max-width:100%;margin:0;background:#211a15;border-radius:2px;overflow:hidden}
+.cfg-view img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cfg-view figcaption{position:absolute;left:14px;bottom:12px;font:500 .66rem/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--bone);background:rgba(20,16,13,.7);padding:7px 10px;border-radius:2px}
 .cfg-form{display:grid;gap:22px}
 .cfg-form fieldset{border:0;margin:0;padding:0;min-width:0}
 .cfg-form legend,.cfg-form .lbl{display:flex;justify-content:space-between;width:100%;font:500 .7rem/1.3 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--brass);margin-bottom:10px;padding:0}
@@ -507,7 +505,7 @@ input[type=range]{width:100%;accent-color:var(--brass);min-height:32px}
           <h3>İç mimari proje ve 3D tasarım</h3>
           <p>Ölçüyü aldıktan sonra mekânı üç boyutlu çiziyoruz. Malzemeyi, ışığı ve yerleşimi uygulamadan önce fotoğraf gerçekliğinde görürsünüz.</p>
           <ul><li>Rölöve</li><li>Yerleşim planı</li><li>3D render</li><li>Malzeme seçimi</li></ul>
-          <div class="ph"><img src="img/render-split.webp" width="900" height="1100" loading="lazy" alt="Aynı salonun yarısı beyaz model, yarısı malzemeli render"></div>
+          <div class="ph"><img src="img/render-split.webp" width="900" height="1100" loading="lazy" alt="Aynı salonun yarısı beyaz 3D model, yarısı bitmiş hali"></div>
         </li>
         <li class="svc-item" data-img="1">
           <h3>Özel üretim mobilya</h3>
@@ -547,11 +545,10 @@ input[type=range]{width:100%;accent-color:var(--brass);min-height:32px}
       <p>Açılıştaki salonun TV ünitesi. Genişliği ve malzemeleri değiştirin, sonucu teklif için bize gönderin. Ölçüler ön fikir içindir; kesin ölçüyü keşifte alırız.</p>
     </div>
     <div class="cfg-body">
-      <div class="cfg-view" id="cfg-view" tabindex="0" aria-label="Ünitenin 3D görünümü. Döndürmek için sürükleyin ya da sol ve sağ ok tuşlarını kullanın.">
-        <canvas id="cfg-canvas"></canvas>
-        <span class="dimw" id="cfg-dimw" hidden></span>
-        <span class="note">Sürükleyerek döndürün</span>
-      </div>
+      <figure class="cfg-view">
+        <picture><source media="(max-width:900px)" srcset="img/tasarla-m.webp"><img src="img/tasarla.webp" width="1200" height="900" loading="lazy" alt="Ceviz çıtalı, pirinç çerçeveli Calacatta mermer panelli TV duvarı ve altı LED aydınlatmalı asma ceviz dolap"></picture>
+        <figcaption>Örnek: ceviz, Calacatta mermer, pirinç, LED</figcaption>
+      </figure>
       <form class="cfg-form" id="cfg-form">
         <div>
           <label class="lbl" for="cfg-w"><span>Genişlik</span><output id="cfg-w-out">360 cm</output></label>
@@ -823,278 +820,26 @@ document.documentElement.classList.add('js');
 })();
 </script>
 
-<script type="importmap">
-{ "imports": {
-  "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.min.js",
-  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
-} }
-</script>
-<script type="module">
-// three.js loads only when the configurator comes near the screen
-let THREE, RoomEnvironment, RoundedBoxGeometry;
-async function loadThree() {
-  const [core, env, rb] = await Promise.all([import('three'), import('three/addons/environments/RoomEnvironment.js'), import('three/addons/geometries/RoundedBoxGeometry.js')]);
-  THREE = core; RoomEnvironment = env.RoomEnvironment; RoundedBoxGeometry = rb.RoundedBoxGeometry;
-}
-
-const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
-function hasWebGL2() { try { return !!document.createElement('canvas').getContext('webgl2'); } catch { return false; } }
-
-/* ---------------- procedural textures ---------------- */
-function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
-function tex(w, h, draw, { repeat = [1, 1], color = true } = {}) {
-  const c = document.createElement('canvas'); c.width = w; c.height = h;
-  draw(c.getContext('2d'), w, h);
-  const t = new THREE.CanvasTexture(c);
-  t.colorSpace = color ? THREE.SRGBColorSpace : THREE.NoColorSpace;
-  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(...repeat); t.anisotropy = 8;
-  return t;
-}
-function grain(ctx, w, h, base, dark, light, n, seed) {
-  const r = rng(seed); ctx.fillStyle = base; ctx.fillRect(0, 0, w, h);
-  for (let i = 0; i < n; i++) {
-    const x = r() * w, amp = 2 + r() * 6, f = 1 + r() * 3, ph = r() * 6;
-    ctx.strokeStyle = r() < .7 ? dark : light; ctx.globalAlpha = .08 + r() * .22; ctx.lineWidth = .4 + r() * 2.2;
-    ctx.beginPath();
-    for (let y = 0; y <= h; y += 16) { const xx = x + Math.sin(y / h * Math.PI * 2 * f + ph) * amp; y ? ctx.lineTo(xx, y) : ctx.moveTo(xx, y); }
-    ctx.stroke();
+<script>
+// Ünite tasarla: the options write the summary and the WhatsApp message
+(() => {
+  const UNIT = { H: 270, cabH: 32, cabD: 42 };
+  const drawerCount = cm => Math.max(3, Math.round(cm / 60));
+  const cfgForm = document.getElementById('cfg-form');
+  const wOut = document.getElementById('cfg-w-out'), spec = document.getElementById('cfg-spec'), cfgSend = document.getElementById('cfg-send');
+  const NAMES = { body: { ceviz: 'Ceviz', mese: 'Meşe', antrasit: 'Antrasit lake', krem: 'Krem lake' }, panel: { mermer: 'Calacatta mermer', traverten: 'Traverten', cita: 'Ahşap çıta' }, metal: { pirinc: 'Pirinç', siyah: 'Siyah' } };
+  function describe() {
+    const f = new FormData(cfgForm), cm = +f.get('w');
+    const rows = [['Genişlik', `${cm} cm`], ['Yükseklik', `${UNIT.H} cm`], ['Asma dolap', `${cm} × ${UNIT.cabH} × ${UNIT.cabD} cm, ${drawerCount(cm)} çekmece`], ['Gövde', NAMES.body[f.get('body')]], ['Orta panel', NAMES.panel[f.get('panel')]], ['Metal', NAMES.metal[f.get('metal')]], ['Gizli LED', f.get('led') === '1' ? 'Var' : 'Yok']];
+    spec.innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
+    wOut.textContent = `${cm} cm`;
+    const msg = ['Merhaba Arkhera, sitenizde tasarladığım TV ünitesi için teklif almak istiyorum.', ...rows.map(([k, v]) => `${k}: ${v}`), 'Ölçüyü keşifte netleştirelim.'].join('\n');
+    cfgSend.href = `https://wa.me/905557524719?text=${encodeURIComponent(msg)}`;
   }
-  ctx.globalAlpha = 1;
-}
-function makeTextures() {
-  const T = {};
-  const wood = (base, dark, light, seed) => tex(512, 1024, (c, w, h) => grain(c, w, h, base, dark, light, 240, seed));
-  T.walnut = wood('#5b3a26', '#2e1c11', '#86603f', 7);
-  T.oak = wood('#b8905f', '#7c5735', '#d6b285', 11);
-  // fronts and tops: grain runs along the cabinet; slats: a narrow vertical strip of the board
-  for (const k of ['walnut', 'oak']) {
-    const along = T[k].clone(); along.center.set(.5, .5); along.rotation = Math.PI / 2; T[k + 'Along'] = along;
-    const slat = T[k].clone(); slat.repeat.set(.07, 1); T[k + 'Slat'] = slat;
-  }
-  // chevron oak parquet, as in the opening room
-  T.floor = tex(1024, 1024, (c, w, h) => {
-    const r = rng(3), a = 128, b = 40;
-    c.fillStyle = '#8c6a46'; c.fillRect(0, 0, w, h);
-    for (let col = 0; col < w / a; col++) for (let row = -5; row < h / b + 5; row++) {
-      const x0 = col * a, y0 = row * b, up = col % 2 === 0, tone = 140 + r() * 34;
-      c.fillStyle = `rgb(${tone + 34},${tone - 2},${tone - 54})`;
-      c.beginPath();
-      if (up) { c.moveTo(x0, y0 + a); c.lineTo(x0 + a, y0); c.lineTo(x0 + a, y0 + b); c.lineTo(x0, y0 + a + b); }
-      else { c.moveTo(x0, y0); c.lineTo(x0 + a, y0 + a); c.lineTo(x0 + a, y0 + a + b); c.lineTo(x0, y0 + b); }
-      c.closePath(); c.fill();
-      c.save(); c.clip(); c.globalAlpha = .14; c.strokeStyle = '#6b4a2c';
-      for (let k = 0; k < 5; k++) { const o = r() * b; c.lineWidth = .5 + r(); c.beginPath(); if (up) { c.moveTo(x0, y0 + a + o); c.lineTo(x0 + a, y0 + o); } else { c.moveTo(x0, y0 + o); c.lineTo(x0 + a, y0 + a + o); } c.stroke(); }
-      c.restore();
-      c.strokeStyle = 'rgba(90,62,38,.4)'; c.lineWidth = 1; c.stroke();
-    }
-  }, { repeat: [10, 6.25] });
-  // Calacatta: soft diagonal veins with a few sharper ones
-  T.marble = tex(1024, 1024, (c, w, h) => {
-    const r = rng(5); c.fillStyle = '#f1eee9'; c.fillRect(0, 0, w, h);
-    const vein = (blur, alpha, width) => {
-      c.filter = `blur(${blur}px)`; c.strokeStyle = `rgba(118,112,104,${alpha})`; c.lineWidth = width;
-      let x = r() * w * 1.4 - w * .2, y = -40; c.beginPath(); c.moveTo(x, y);
-      while (y < h + 40) { const nx = x + (r() - .3) * 90, ny = y + 50 + r() * 70; c.quadraticCurveTo(x + (r() - .5) * 60, (y + ny) / 2, nx, ny); x = nx; y = ny; }
-      c.stroke();
-    };
-    for (let i = 0; i < 5; i++) vein(6, .18, 10);
-    for (let i = 0; i < 9; i++) vein(1.2, .38, 1.6);
-    for (let i = 0; i < 10; i++) vein(.4, .3, .7);
-    c.filter = 'none';
-  });
-  T.travertine = tex(512, 512, (c, w, h) => {
-    const r = rng(9); c.fillStyle = '#d6c6ab'; c.fillRect(0, 0, w, h);
-    for (let y = 0; y < h; y += 2 + r() * 6) { c.fillStyle = `rgba(${150 + r() * 60},${130 + r() * 50},${100 + r() * 40},.16)`; c.fillRect(0, y, w, 1 + r() * 4); }
-    for (let i = 0; i < 240; i++) { c.fillStyle = 'rgba(120,98,70,.3)'; c.beginPath(); c.ellipse(r() * w, r() * h, 1 + r() * 5, .5 + r() * 1.2, 0, 0, 7); c.fill(); }
-  });
-  T.plaster = tex(256, 256, (c, w, h) => { const r = rng(17); c.fillStyle = '#fff'; c.fillRect(0, 0, w, h); for (let i = 0; i < 2000; i++) { c.fillStyle = `rgba(150,140,128,${r() * .05})`; c.fillRect(r() * w, r() * h, 2, 2); } }, { repeat: [8, 3] });
-  T.screen = tex(256, 144, (c, w, h) => { const g = c.createLinearGradient(0, 0, w, h); g.addColorStop(0, '#24272d'); g.addColorStop(.45, '#0e1013'); g.addColorStop(1, '#08090b'); c.fillStyle = g; c.fillRect(0, 0, w, h); });
-  T.blob = tex(128, 128, (c, w, h) => { const g = c.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.fillRect(0, 0, w, h); });
-  T.blob.wrapS = T.blob.wrapT = THREE.ClampToEdgeWrapping;
-  return T;
-}
-
-/* ---------------- materials ---------------- */
-function makeLibrary(T) {
-  const std = o => new THREE.MeshStandardMaterial(o);
-  const lacquer = color => std({ color, roughness: .4 });
-  const L = {
-    marble: std({ map: T.marble, roughness: .18 }),
-    travertine: std({ map: T.travertine, roughness: .7 }),
-    wall: std({ map: T.plaster, color: 0xe6dac7, roughness: .95 }),
-    floor: std({ map: T.floor, roughness: .62 }),
-    brass: std({ color: 0xc9a063, metalness: 1, roughness: .26 }),
-    black: std({ color: 0x1b1a19, metalness: .6, roughness: .4 }),
-    backer: std({ color: 0x1e1712, roughness: .9 }),
-    tv: std({ map: T.screen, roughness: .08, metalness: .2 }),
-    tvFrame: std({ color: 0x111214, roughness: .5 }),
-    ceramic: std({ color: 0xece6dc, roughness: .55 }),
-    pot: std({ color: 0xf2eee8, roughness: .5 }),
-    foliage: std({ color: 0x4f6a3a, roughness: .85, flatShading: true }),
-    paper: std({ color: 0xe9e3d8, roughness: .9 }),
-  };
-  const antrasit = lacquer(0x2f2d2b), krem = lacquer(0xe4dccf);
-  // per body: [cabinet fronts and top, slats]
-  L.bodies = {
-    ceviz: [std({ map: T.walnutAlong, roughness: .5 }), std({ map: T.walnutSlat, roughness: .55 })],
-    mese: [std({ map: T.oakAlong, roughness: .5 }), std({ map: T.oakSlat, roughness: .55 })],
-    antrasit: [antrasit, antrasit],
-    krem: [krem, krem],
-  };
-  L.metals = { pirinc: L.brass, siyah: L.black };
-  L.panels = { mermer: L.marble, traverten: L.travertine };
-  return L;
-}
-function box(w, h, d) { return new THREE.BoxGeometry(w, h, d); }
-
-/* ---------------- the TV wall from the opening room ----------------
-   Left to right: a narrow slat column, a stone panel with an inset metal frame and the TV, a wide slat
-   column; a floating cabinet of drawers runs the full width with LED light underneath.
-   Origin: floor, centre of the wall; the unit stands in front of the wall (+z). */
-const UNIT = { H: 2.7, panelH: 2.45, cabH: .32, cabD: .42, cabY: .22 };
-const drawerCount = W => Math.max(3, Math.round(W / .6));
-function buildWallUnit(o, L, ledMat) {
-  const g = new THREE.Group(), { H, panelH, cabH, cabD, cabY } = UNIT, W = o.width;
-  const [bodyMat, slatMat] = L.bodies[o.body], metal = L.metals[o.metal];
-  const mesh = (geo, mat, x, y, z, shadow = true) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = m.receiveShadow = shadow; g.add(m); return m; };
-  const stone = o.panel !== 'cita';
-  const lw = W * .13, pw = stone ? W * .55 : 0, x0 = -W / 2, px = x0 + lw + pw / 2;
-  // slat columns on a dark backer
-  const pitch = .055, sw = .032, mats = [];
-  const column = (from, to) => {
-    mesh(box(to - from, H, .012), L.backer, (from + to) / 2, H / 2, .006, false);
-    const n = Math.floor((to - from) / pitch), pad = (to - from - n * pitch) / 2;
-    for (let i = 0; i < n; i++) mats.push(new THREE.Matrix4().makeTranslation(from + pad + pitch / 2 + i * pitch, H / 2, .0245));
-  };
-  if (stone) { column(x0, x0 + lw); column(x0 + lw + pw, W / 2); } else column(x0, W / 2);
-  const slats = new THREE.InstancedMesh(box(sw, H, .025), slatMat, mats.length);
-  mats.forEach((m, i) => slats.setMatrixAt(i, m)); slats.castShadow = slats.receiveShadow = true; g.add(slats);
-  // stone panel with an inset metal frame
-  const tvW = Math.min(1.65, (stone ? pw : W * .5) * .66), tvH = tvW * .5625, tvY = 1.42, tvX = stone ? px : 0;
-  if (stone) {
-    mesh(box(pw, panelH, .03), L.panels[o.panel], px, panelH / 2, .015);
-    const inset = Math.min(.14, pw * .07), fl = px - pw / 2 + inset, fr = px + pw / 2 - inset, fb = cabY + cabH + .06, ft = panelH - inset;
-    const bar = (w, h, x, y) => mesh(box(w, h, .006), metal, x, y, .033, false);
-    bar(fr - fl, .008, px, ft); bar(fr - fl, .008, px, fb); bar(.008, ft - fb, fl, (ft + fb) / 2); bar(.008, ft - fb, fr, (ft + fb) / 2);
-  }
-  mesh(box(tvW + .012, tvH + .012, .03), L.tvFrame, tvX, tvY, .05);
-  mesh(box(tvW, tvH, .002), L.tv, tvX, tvY, .066, false);
-  // floating cabinet: a top, a carcass and a row of drawer fronts with shadow gaps
-  const n = drawerCount(W), gap = .006, fw = (W - gap * (n + 1)) / n;
-  mesh(box(W, .025, cabD), bodyMat, 0, cabY + cabH - .0125, cabD / 2);
-  mesh(box(W - .04, cabH - .025, cabD - .02), L.backer, 0, cabY + (cabH - .025) / 2, (cabD - .02) / 2, false);
-  for (const sx of [-1, 1]) mesh(box(.02, cabH, cabD), bodyMat, sx * (W / 2 - .01), cabY + cabH / 2, cabD / 2);
-  for (let i = 0; i < n; i++) mesh(box(fw, cabH - .035, .02), bodyMat, -W / 2 + gap + fw / 2 + i * (fw + gap), cabY + (cabH - .025) / 2, cabD - .01);
-  if (o.led) { const s = new THREE.Mesh(box(W - .06, .006, .01), ledMat); s.position.set(0, cabY - .004, cabD - .08); g.add(s); }
-  // the objects from the photo: a ring vase and a small vase on the left, a plant and books on the right
-  const top = cabY + cabH;
-  const ring = mesh(new THREE.TorusGeometry(.085, .04, 20, 40), L.ceramic, x0 + lw + .16, top + .125, cabD * .5); ring.scale.z = .7;
-  mesh(new THREE.SphereGeometry(.045, 20, 14), L.ceramic, x0 + lw + .32, top + .045, cabD * .55);
-  const rx = W / 2 - Math.min(.32, W * .09);
-  mesh(box(.24, .03, .17), L.paper, rx, top + .015, cabD * .5);
-  mesh(box(.22, .025, .16), L.paper, rx, top + .0425, cabD * .5);
-  mesh(new THREE.CylinderGeometry(.075, .06, .13, 28), L.pot, rx, top + .12, cabD * .5);
-  const rr = rng(11);
-  for (let i = 0; i < 6; i++) { const f = mesh(new THREE.IcosahedronGeometry(.06 + rr() * .03, 0), L.foliage, rx + (rr() - .5) * .16, top + .22 + rr() * .08, cabD * .5 + (rr() - .5) * .12); f.scale.y = .6; }
-  return g;
-}
-
-/* ---------------- configurator ---------------- */
-const view = document.getElementById('cfg-view');
-const cfgForm = document.getElementById('cfg-form');
-const wOut = document.getElementById('cfg-w-out'), spec = document.getElementById('cfg-spec'), cfgSend = document.getElementById('cfg-send');
-const NAMES = { body: { ceviz: 'Ceviz', mese: 'Meşe', antrasit: 'Antrasit lake', krem: 'Krem lake' }, panel: { mermer: 'Calacatta mermer', traverten: 'Traverten', cita: 'Ahşap çıta' }, metal: { pirinc: 'Pirinç', siyah: 'Siyah' } };
-function readCfg() {
-  const f = new FormData(cfgForm);
-  return { width: +f.get('w') / 100, body: f.get('body'), panel: f.get('panel'), metal: f.get('metal'), led: f.get('led') === '1' };
-}
-function describe(o) {
-  const cm = Math.round(o.width * 100);
-  const rows = [['Genişlik', `${cm} cm`], ['Yükseklik', `${UNIT.H * 100} cm`], ['Asma dolap', `${cm} × ${UNIT.cabH * 100} × ${UNIT.cabD * 100} cm, ${drawerCount(o.width)} çekmece`], ['Gövde', NAMES.body[o.body]], ['Orta panel', NAMES.panel[o.panel]], ['Metal', NAMES.metal[o.metal]], ['Gizli LED', o.led ? 'Var' : 'Yok']];
-  spec.innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
-  wOut.textContent = `${cm} cm`;
-  const msg = ['Merhaba Arkhera, sitenizde tasarladığım TV ünitesi için teklif almak istiyorum.', ...rows.map(([k, v]) => `${k}: ${v}`), 'Ölçüyü keşifte netleştirelim.'].join('\n');
-  cfgSend.href = `https://wa.me/905557524719?text=${encodeURIComponent(msg)}`;
-}
-describe(readCfg());
-cfgForm.addEventListener('input', () => describe(readCfg()));
-cfgForm.addEventListener('submit', e => e.preventDefault());
-
-if (hasWebGL2()) {
-  const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { io.disconnect(); loadThree().then(initConfigurator).catch(() => { view.querySelector('.note').textContent = '3D görünüm yüklenemedi; seçimler ve teklif mesajı çalışır.'; }); } }, { rootMargin: '600px 0px' });
-  io.observe(view);
-} else view.querySelector('.note').textContent = 'Bu cihazda 3D görünüm açılamadı; seçimler ve teklif mesajı çalışır.';
-
-function initConfigurator() {
-  const canvas = document.getElementById('cfg-canvas'), dimEl = document.getElementById('cfg-dimw');
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-  renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = .92;
-  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  const scene = new THREE.Scene(); scene.background = new THREE.Color(0xe6dac7);
-  const pmrem = new THREE.PMREMGenerator(renderer);
-  scene.environment = pmrem.fromScene(new RoomEnvironment(), .04).texture; scene.environmentIntensity = .32;
-  const camera = new THREE.PerspectiveCamera(34, 1, .05, 60);
-  const T = makeTextures(), L = makeLibrary(T);
-  const LEDMAT = new THREE.MeshBasicMaterial({ color: new THREE.Color(1, .85, .62).multiplyScalar(2.2), toneMapped: false });
-  // the room turns with the unit, so nothing ever sinks into the wall
-  const pivot = new THREE.Group(); scene.add(pivot);
-  const floorGeo = new THREE.PlaneGeometry(16, 10); floorGeo.rotateX(-Math.PI / 2);
-  const floor = new THREE.Mesh(floorGeo, L.floor); floor.position.z = 4.5; floor.receiveShadow = true; pivot.add(floor);
-  const wall = new THREE.Mesh(new THREE.PlaneGeometry(16, 6), L.wall); wall.position.set(0, 3, 0); wall.receiveShadow = true; pivot.add(wall);
-  const glowMat = new THREE.MeshBasicMaterial({ map: T.blob, color: 0xffb768, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
-  const floorGlow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), glowMat); floorGlow.rotation.x = -Math.PI / 2; floorGlow.position.set(0, .004, .34); pivot.add(floorGlow);
-  const wallGlow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), glowMat); wallGlow.position.set(0, .14, .03); pivot.add(wallGlow);
-  // soft daylight from the window side, as in the opening room
-  const key = new THREE.DirectionalLight(0xfff1de, 2); key.position.set(-4, 4.5, 4.5); key.castShadow = true; key.shadow.mapSize.set(1024, 1024);
-  Object.assign(key.shadow.camera, { left: -4, right: 4, top: 4, bottom: -1, near: 1, far: 20 }); key.shadow.bias = -.0004; key.shadow.normalBias = .02; key.shadow.radius = 6;
-  scene.add(key);
-  scene.add(new THREE.HemisphereLight(0xfff8ef, 0xa98a66, .3));
-  let unit = null, yaw = -.22, W = 1, H = 1, o = readCfg();
-
-  function rebuild() {
-    o = readCfg();
-    if (unit) { pivot.remove(unit); unit.traverse(m => m.geometry && m.geometry.dispose()); }
-    unit = buildWallUnit(o, L, LEDMAT); pivot.add(unit);
-    floorGlow.visible = wallGlow.visible = o.led;
-    floorGlow.scale.set(o.width * 1.05, .75, 1); wallGlow.scale.set(o.width * 1.05, .34, 1);
-    frameCam(); draw();
-  }
-  function frameCam() {
-    const half = o.width / 2 + .5, vh = UNIT.H / 2 + .55;
-    const t = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-    const dist = Math.max(half / (t * camera.aspect), vh / t);
-    camera.position.set(0, 1.45, dist + .3); camera.lookAt(0, 1.3, 0); camera.updateProjectionMatrix();
-  }
-  const v = new THREE.Vector3();
-  function draw() {
-    pivot.rotation.y = yaw; pivot.updateMatrixWorld(); renderer.render(scene, camera);
-    v.set(0, UNIT.H + .12, .05).applyMatrix4(pivot.matrixWorld).project(camera);
-    dimEl.hidden = false; dimEl.textContent = `← ${Math.round(o.width * 100)} cm →`;
-    dimEl.style.left = ((v.x * .5 + .5) * W) + 'px'; dimEl.style.top = ((-v.y * .5 + .5) * H) + 'px';
-  }
-  function resize() {
-    W = view.clientWidth; H = view.clientHeight;
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5)); renderer.setSize(W, H, false);
-    camera.aspect = W / H; frameCam(); draw();
-  }
-  // drag to turn; a horizontal drag turns, a vertical one scrolls the page
-  let sx = null, sy = 0, sYaw = 0, decided = false, turning = false;
-  view.addEventListener('pointerdown', e => { sx = e.clientX; sy = e.clientY; sYaw = yaw; decided = e.pointerType === 'mouse'; turning = decided; });
-  addEventListener('pointermove', e => {
-    if (sx === null) return;
-    const dx = e.clientX - sx, dy = e.clientY - sy;
-    if (!decided && Math.hypot(dx, dy) > 8) { decided = true; turning = Math.abs(dx) > Math.abs(dy); }
-    if (turning) { yaw = clamp(sYaw + dx * .005, -.6, .6); draw(); }
-  });
-  addEventListener('pointerup', () => { sx = null; });
-  addEventListener('pointercancel', () => { sx = null; });
-  view.addEventListener('keydown', e => {
-    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); yaw = clamp(yaw + (e.key === 'ArrowLeft' ? -.1 : .1), -.6, .6); draw(); }
-  });
-  cfgForm.addEventListener('input', rebuild);
-  addEventListener('resize', resize);
-  rebuild(); resize();
-}
+  cfgForm.addEventListener('input', describe);
+  cfgForm.addEventListener('submit', e => e.preventDefault());
+  describe();
+})();
 </script>
 
 </body>

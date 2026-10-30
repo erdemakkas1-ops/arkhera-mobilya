@@ -4,6 +4,16 @@ One-page demo for Arkhera Mobilya & Dekorasyon (@arkhera_mobilya, Ankara; Mimar 
 interior architecture, 3D design and render, custom-made furniture, turnkey renovation. Same family
 as the Oha Burger and Maviron Çelik demos: the hero is a film scrubbed by page scroll.
 
+Live: https://erdemakkas1-ops.github.io/arkhera-mobilya/ (GitHub Pages, repo `erdemakkas1-ops/arkhera-mobilya`,
+branch `gh-pages`; `*.vercel.app` is blocked on some Turkish networks, so the demo lives on Pages).
+`pages/` is a checkout of `gh-pages` (kept out of git). To update the live site:
+
+```bash
+py -3 tools/build.py https://erdemakkas1-ops.github.io/arkhera-mobilya
+cp -r dist/index.html dist/favicon.svg dist/og.jpg dist/img pages/
+cd pages && git add -A && git commit -m "Update site" && git push
+```
+
 ## The film
 
 A live three.js (r180, from jsDelivr) living room built in code inside `arkhera.html`. It tells

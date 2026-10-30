@@ -21,7 +21,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap">
-<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.min.js">
 <style>
 /* Layout: a pinned 3D film (plan → model → materials → evening light), then editorial sections that alternate espresso and stone grounds. */
 :root{
@@ -88,15 +87,27 @@ em{font-style:italic}
   .nav .btn{margin-top:20px;justify-content:center;font:600 .82rem/1 var(--f-body);letter-spacing:.08em;min-height:52px;border-bottom:1px solid currentColor}
 }
 
-/* ---------- film ---------- */
-.film{position:relative;height:calc(100vh * 6.4);height:calc(100svh * 6.4);background:var(--ink)}
-.stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden}
-.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:pan-y}
-.poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:opacity .6s}
-.film.ready .poster{opacity:0;pointer-events:none}
+/* ---------- film: four keyframes of one room, scrubbed by scroll ----------
+   Without .live (reduced motion, no JS, ?still) it is a still of the finished room with the chapters as text. */
+.film{position:relative;background:var(--ink)}
+.stage{position:relative}
+.film.live{height:calc(100vh * 6.4);height:calc(100svh * 6.4)}
+.film.live .stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden}
+.frames{position:absolute;inset:0;transform-origin:50% 55%;will-change:transform}
+.fr img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.fr-1,.fr-2,.fr-3,.seam{display:none}
+.film.live .fr-1,.film.live .fr-2,.film.live .fr-3{display:block}
+.film.live .seam{display:block}
+.film.live .fr-2 img,.film.live .fr-4 img{opacity:0}
+.film.live .fr-3 img{clip-path:inset(0 0 0 100%)}
+.seam{position:absolute;top:0;bottom:0;left:100%;width:2px;margin-left:-1px;background:#e9c88f;box-shadow:0 0 14px 3px rgba(233,200,143,.55);opacity:0}
 .scrim{position:absolute;inset:0;pointer-events:none;background:
   radial-gradient(120% 80% at 0% 100%,rgba(20,16,13,.78),rgba(20,16,13,0) 58%),
-  linear-gradient(rgba(20,16,13,.5),rgba(20,16,13,0) 22%)}
+  linear-gradient(rgba(20,16,13,.62),rgba(20,16,13,0) 30%)}
+/* only while the headline shows: the window behind it is bright */
+.scrim-intro{background:linear-gradient(90deg,rgba(20,16,13,.88),rgba(20,16,13,.66) 36%,rgba(20,16,13,0) 64%);transition:opacity .5s}
+.scrim-intro.off{opacity:0}
+.film:not(.live) .scrim-intro{display:none}
 .intro{position:absolute;left:0;right:0;top:calc(var(--head) + env(safe-area-inset-top,0px) + clamp(28px,9vh,110px));max-width:44rem;transition:opacity .5s,transform .5s}
 .intro h1{font-size:clamp(3rem,7vw,6.6rem);line-height:.92;margin-top:18px}
 .intro h1 em{color:var(--brass)}
@@ -119,15 +130,12 @@ em{font-style:italic}
 .rail button::before{content:"";width:100%;height:1px;background:var(--line);transition:background .3s,height .3s}
 .rail button.on{color:var(--bone)}
 .rail button.on::before{height:2px;background:var(--brass)}
-.rail .bar{display:none}
 
 .tags{position:absolute;inset:0;pointer-events:none}
 .tag{position:absolute;left:0;top:0;display:flex;align-items:center;gap:8px;white-space:nowrap;font:500 .7rem/1 var(--f-mono);letter-spacing:.06em;color:var(--bone);opacity:0;transition:opacity .35s;will-change:transform}
 .tag::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--brass);box-shadow:0 0 0 4px rgba(201,161,101,.25);flex:none}
 .tag span{padding:7px 10px;background:rgba(20,16,13,.78);border:1px solid var(--line);border-radius:3px}
 .tag.flip{flex-direction:row-reverse}
-.tag.dim::before{display:none}
-.tag.dim span{background:none;border:0;padding:0;color:var(--brass);font-size:.78rem}
 .tag.on{opacity:1}
 
 .end{position:absolute;left:0;right:0;bottom:clamp(36px,10vh,110px);display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:24px;opacity:0;transform:translateY(20px);transition:opacity .5s,transform .5s;pointer-events:none}
@@ -135,15 +143,14 @@ em{font-style:italic}
 .end h2{font-size:clamp(2.4rem,5vw,4.8rem);line-height:.95;max-width:12ch}
 .end .acts{display:flex;flex-wrap:wrap;gap:12px}
 
-.capture .intro,.capture .chapters,.capture .rail,.capture .tags,.capture .end,.capture .scrim,.capture .top,.capture .quick{display:none!important}
-
 @media (max-width:1023px){
   .rail{left:max(var(--gut),env(safe-area-inset-left,0px));bottom:calc(24px + env(safe-area-inset-bottom,0px));gap:6px}
   .rail button{flex:1;width:auto}
   .chap,.end{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
 }
 @media (max-width:760px){
-  .scrim{background:linear-gradient(rgba(20,16,13,.82),rgba(20,16,13,.35) 38%,rgba(20,16,13,0) 55%),linear-gradient(0deg,rgba(20,16,13,.85),rgba(20,16,13,0) 34%)}
+  .scrim{background:linear-gradient(rgba(20,16,13,.84),rgba(20,16,13,.4) 40%,rgba(20,16,13,0) 56%),linear-gradient(0deg,rgba(20,16,13,.88),rgba(20,16,13,0) 36%)}
+  .scrim-intro{background:linear-gradient(rgba(20,16,13,.9),rgba(20,16,13,.72) 42%,rgba(20,16,13,0) 62%)}
   .intro{top:calc(var(--head) + env(safe-area-inset-top,0px) + 18px)}
   .intro h1{font-size:clamp(2.7rem,12.5vw,4rem)}
   .intro p{margin-top:14px;font-size:.98rem}
@@ -154,24 +161,19 @@ em{font-style:italic}
   .chap p{font-size:.95rem}
   .rail button{min-height:32px;font-size:0}
   .rail button::before{height:2px}
-  .tag[data-wide]{display:none}
   .end{bottom:calc(64px + env(safe-area-inset-bottom,0px))}
   .end .acts{width:100%}
 }
 
-/* still film: reduced motion, no WebGL2, or ?still */
-.film.is-still{height:auto}
-.film.is-still .stage{position:relative;height:auto;min-height:0;display:grid}
-.film.is-still canvas,.film.is-still .rail,.film.is-still .tags,.film.is-still .hint{display:none}
-.film.is-still .poster{position:relative;height:72vh;min-height:420px;opacity:1}
-.film.is-still .scrim{height:72vh;min-height:420px;background:linear-gradient(90deg,rgba(20,16,13,.88),rgba(20,16,13,.55) 45%,rgba(20,16,13,.1) 75%)}
-.film.is-still .chapters{padding-left:max(var(--gut),env(safe-area-inset-left,0px));padding-right:max(var(--gut),env(safe-area-inset-right,0px))}
-@media (max-width:760px){.film.is-still .scrim{background:rgba(20,16,13,.72)}}
-.film.is-still .intro{transform:none;opacity:1}
-.film.is-still .chapters{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr));gap:32px;padding-block:56px}
-.film.is-still .chap{position:static;opacity:1;transform:none;max-width:none;padding-left:0;padding-right:0}
-.film.is-still .chap h2{font-size:2.2rem}
-.film.is-still .end{position:static;opacity:1;transform:none;padding-bottom:72px;pointer-events:auto}
+/* still film */
+.film:not(.live) .frames{position:relative;inset:auto;height:min(78vh,760px);min-height:440px}
+.film:not(.live) .scrim{inset:0 0 auto;height:min(78vh,760px);min-height:440px;background:linear-gradient(90deg,rgba(20,16,13,.88),rgba(20,16,13,.55) 45%,rgba(20,16,13,.1) 75%)}
+.film:not(.live) .rail,.film:not(.live) .tags,.film:not(.live) .hint{display:none}
+.film:not(.live) .chapters{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr));gap:32px;padding-block:56px;padding-left:max(var(--gut),env(safe-area-inset-left,0px));padding-right:max(var(--gut),env(safe-area-inset-right,0px))}
+.film:not(.live) .chap{position:static;opacity:1;transform:none;max-width:none;padding-left:0;padding-right:0}
+.film:not(.live) .chap h2{font-size:2.2rem}
+.film:not(.live) .end{position:static;opacity:1;transform:none;padding-bottom:72px;pointer-events:auto}
+@media (max-width:760px){.film:not(.live) .scrim{background:rgba(20,16,13,.72)}}
 
 /* ---------- studio ---------- */
 .studio{padding-block:clamp(88px,16vh,180px)}
@@ -368,17 +370,23 @@ input[type=range]{width:100%;accent-color:var(--brass);min-height:32px}
 </header>
 
 <main>
-  <section class="film" id="film" aria-label="Bir salonun plandan teslime hikâyesi">
+  <section class="film" id="film" aria-label="Bir salonun boş odadan teslime hikâyesi">
     <div class="stage">
-      <picture><source media="(max-width:760px)" srcset="img/film-poster-m.webp"><img class="poster" src="img/film-poster.webp" alt="Bir salonun kat planı" fetchpriority="high"></picture>
-      <canvas id="film-canvas" aria-hidden="true"></canvas>
+      <div class="frames">
+        <picture class="fr fr-1"><source media="(max-width:760px)" srcset="img/film/1-kesif-m.webp"><img src="img/film/1-kesif.webp" alt="" width="1920" height="1080" fetchpriority="high"></picture>
+        <picture class="fr fr-2"><source media="(max-width:760px)" srcset="img/film/2-proje-m.webp"><img src="img/film/2-proje.webp" alt="" width="1920" height="1080"></picture>
+        <picture class="fr fr-3"><source media="(max-width:760px)" srcset="img/film/3-uretim-m.webp"><img src="img/film/3-uretim.webp" alt="" width="1920" height="1080"></picture>
+        <picture class="fr fr-4"><source media="(max-width:760px)" srcset="img/film/4-teslim-m.webp"><img src="img/film/4-teslim.webp" alt="Arkhera’nın tasarladığı salon akşam ışığında: ceviz çıtalı TV duvarı, mermer panel, krem L koltuk ve gizli LED’li tavan" width="1920" height="1080"></picture>
+        <i class="seam"></i>
+      </div>
       <div class="scrim"></div>
+      <div class="scrim scrim-intro"></div>
 
       <div class="intro wrap">
         <p class="eyebrow">Arkhera Mobilya &amp; Dekorasyon · Ankara</p>
         <h1>Mekânlara değer, <em>yaşama zarafet.</em></h1>
         <p>Mimar Yasemin Kara ve ekibi iç mimari projeyi çizer, mobilyayı mekâna özel ölçüyle üretir ve evinizi anahtar teslim kurar.</p>
-        <div class="hint"><i></i>Kaydırın: bir salon, plandan teslime</div>
+        <div class="hint"><i></i>Kaydırın: bir salon, boş odadan teslime</div>
       </div>
 
       <ol class="chapters wrap">
@@ -390,7 +398,7 @@ input[type=range]{width:100%;accent-color:var(--brass);min-height:32px}
         <li class="chap wrap" data-from="2.45" data-to="4.75">
           <span class="num">02 / 04</span>
           <h2>Proje &amp; 3D tasarım</h2>
-          <p>Plan üç boyuta geçer. Yerleşimi, oranları ve ışığı hiçbir parça üretilmeden önce birlikte kararlaştırırız.</p>
+          <p>Oda önce üç boyutlu modelde kurulur. Yerleşimi, oranları ve ışığı hiçbir parça üretilmeden önce birlikte kararlaştırırız.</p>
         </li>
         <li class="chap wrap" data-from="4.95" data-to="8.2">
           <span class="num">03 / 04</span>
@@ -404,20 +412,18 @@ input[type=range]{width:100%;accent-color:var(--brass);min-height:32px}
         </li>
       </ol>
 
+      <!-- data-d / data-m: the point on the desktop (16:9) / phone (9:16) image, as fractions of its width and height -->
       <div class="tags" aria-hidden="true">
-        <div class="tag dim" data-at="0,0,-3.05" data-from="-1" data-to="2.1"><span>600 cm</span></div>
-        <div class="tag dim" data-at="3.5,0,0" data-from="-1" data-to="2.1"><span>500 cm</span></div>
-        <div class="tag dim" data-at="-3.5,0,0" data-from="-1" data-to="2.1"><span>Pencere 320 cm</span></div>
-        <div class="tag" data-at="1.25,2.25,-2.46" data-from="6.4" data-to="8.25"><span>Ceviz çıta panel · 3,5 cm</span></div>
-        <div class="tag" data-at="-0.55,1.95,-2.44" data-from="6.6" data-to="8.25" data-wide><span>Calacatta mermer panel</span></div>
-        <div class="tag" data-at="0.95,0.45,-2.06" data-from="6.8" data-to="8.25"><span>Özel ölçü asma ünite · 360 cm</span></div>
-        <div class="tag" data-at="0.45,0.4,-0.85" data-from="7.0" data-to="8.25" data-wide><span>Traverten orta sehpa</span></div>
-        <div class="tag" data-at="0.6,2.9,-2.05" data-from="9.6" data-to="11.0"><span>Gizli LED tavan · 3000 K</span></div>
-        <div class="tag" data-at="-1.7,0.01,1.35" data-from="9.8" data-to="11.0" data-wide><span>Balıksırtı meşe parke</span></div>
+        <div class="tag" data-d=".25,.42" data-from="0.6" data-to="2.2"><span>Pencere · 320 cm</span></div>
+        <div class="tag" data-d=".86,.3" data-from="6.4" data-to="8.25"><span>Ceviz çıta panel · 3,5 cm</span></div>
+        <div class="tag" data-d=".64,.31" data-m=".564,.31" data-from="6.6" data-to="8.25"><span>Calacatta mermer panel</span></div>
+        <div class="tag" data-d=".69,.72" data-m=".72,.72" data-from="6.8" data-to="8.25"><span>Özel ölçü asma ünite · 360 cm</span></div>
+        <div class="tag" data-d=".55,.78" data-m=".28,.78" data-from="7.0" data-to="8.25"><span>Traverten orta sehpa</span></div>
+        <div class="tag" data-d=".6,.115" data-m=".44,.115" data-from="9.6" data-to="11.0"><span>Gizli LED tavan · 3000 K</span></div>
       </div>
 
       <nav class="rail" aria-label="Film bölümleri">
-        <button type="button" data-go="0.6">Keşif</button>
+        <button type="button" data-go="0.9">Keşif</button>
         <button type="button" data-go="3.9">Proje</button>
         <button type="button" data-go="7.6">Üretim</button>
         <button type="button" data-go="10.4">Teslim</button>
@@ -538,7 +544,7 @@ input[type=range]{width:100%;accent-color:var(--brass);min-height:32px}
         <p class="eyebrow">Ünite tasarla</p>
         <h2 id="cfg-h">Duvarınızın ölçüsüyle, sizin seçtiğiniz malzemeyle.</h2>
       </div>
-      <p>Filmdeki TV ünitesinin aynısı. Genişliği ve malzemeleri değiştirin, sonucu teklif için bize gönderin. Ölçüler ön fikir içindir; kesin ölçüyü keşifte alırız.</p>
+      <p>Açılıştaki salonun TV ünitesi. Genişliği ve malzemeleri değiştirin, sonucu teklif için bize gönderin. Ölçüler ön fikir içindir; kesin ölçüyü keşifte alırız.</p>
     </div>
     <div class="cfg-body">
       <div class="cfg-view" id="cfg-view" tabindex="0" aria-label="Ünitenin 3D görünümü. Döndürmek için sürükleyin ya da sol ve sağ ok tuşlarını kullanın.">
@@ -745,6 +751,74 @@ document.documentElement.classList.add('js');
     } else err.textContent = '';
   });
   form.addEventListener('submit', e => e.preventDefault());
+
+  // film: scroll position → film time 0–12 s → which keyframe shows and how far the wipe has run
+  (() => {
+    if (reduce || new URLSearchParams(location.search).has('still')) return;
+    film.classList.add('live');
+    const T_END = 12;
+    const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+    const smooth = (a, b, v) => { const x = clamp((v - a) / (b - a)); return x * x * (3 - 2 * x); };
+    const stage = $('.stage', film), frames = $('.frames', film), seam = $('.seam', film);
+    const f2 = $('.fr-2 img', film), f3 = $('.fr-3 img', film), f4 = $('.fr-4 img', film);
+    const intro = $('.intro', film), introShade = $('.scrim-intro', film), chaps = $$('.chap', film), endEl = $('.end', film), railBtns = $$('.rail button', film);
+    const pt = s => s && s.split(',').map(Number);
+    const tags = $$('.tag', film).map(el => ({ el, d: pt(el.dataset.d), m: pt(el.dataset.m), from: +el.dataset.from, to: +el.dataset.to }));
+    const phone = matchMedia('(max-width:760px)');
+    let W = 1, H = 1;
+
+    function apply(t) {
+      const k2 = smooth(2.2, 3.6, t), w = smooth(4.9, 7.5, t), k4 = smooth(8.4, 10, t);
+      f2.style.opacity = k2; f4.style.opacity = k4;
+      const edge = (1 - w) * 100;
+      f3.style.clipPath = `inset(0 0 0 ${edge.toFixed(2)}%)`;
+      seam.style.left = edge + '%'; seam.style.opacity = w > 0 && w < 1 ? 1 : 0;
+      const s = 1.07 - .07 * t / T_END;
+      frames.style.transform = `scale(${s.toFixed(4)})`;
+      intro.classList.toggle('off', t > .35); introShade.classList.toggle('off', t > .35);
+      chaps.forEach(c => c.classList.toggle('on', t >= +c.dataset.from && t < +c.dataset.to));
+      endEl.classList.toggle('on', t > 11.05);
+      const ci = t < 2.35 ? 0 : t < 4.85 ? 1 : t < 8.3 ? 2 : 3;
+      railBtns.forEach((b, i) => { b.classList.toggle('on', i === ci); b.setAttribute('aria-current', i === ci ? 'step' : 'false'); });
+      // tags sit on points of the image: map them through object-fit: cover and the push-in scale
+      const ia = phone.matches ? 9 / 16 : 16 / 9;
+      const rw = W / H > ia ? W : H * ia, rh = rw / ia, ox = (W - rw) / 2, oy = (H - rh) / 2;
+      for (const g of tags) {
+        const p = phone.matches ? g.m : g.d;
+        const on = !!p && t >= g.from && t < g.to;
+        g.el.classList.toggle('on', on);
+        if (!on) continue;
+        const x = W * .5 + (ox + p[0] * rw - W * .5) * s, y = H * .55 + (oy + p[1] * rh - H * .55) * s;
+        const flip = x > W * .62;
+        g.el.classList.toggle('flip', flip);
+        const left = clamp(x + (flip ? -g.el.offsetWidth + 5 : -5), 8, W - g.el.offsetWidth - 8);
+        g.el.style.transform = `translate3d(${left.toFixed(1)}px,${(y - g.el.offsetHeight / 2).toFixed(1)}px,0)`;
+      }
+    }
+
+    // ease towards the scroll target so wheel steps glide; stop when settled
+    let target = 0, cur = 0, raf = 0, last = 0;
+    function tick(now) {
+      const dt = Math.min(.1, (now - (last || now - 16)) / 1000); last = now;
+      cur += (target - cur) * Math.min(1, dt * 10);
+      if (Math.abs(target - cur) < .002) cur = target;
+      apply(cur);
+      raf = cur === target ? 0 : requestAnimationFrame(tick);
+      if (!raf) last = 0;
+    }
+    function read() {
+      const r = film.getBoundingClientRect();
+      target = clamp(-r.top / Math.max(1, r.height - innerHeight)) * T_END;
+      if (!raf) raf = requestAnimationFrame(tick);
+    }
+    function size() { W = stage.clientWidth; H = stage.clientHeight; apply(cur); }
+    addEventListener('scroll', read, { passive: true });
+    addEventListener('resize', () => { size(); read(); });
+    railBtns.forEach(b => b.addEventListener('click', () => {
+      scrollTo({ top: film.offsetTop + (+b.dataset.go / T_END) * (film.offsetHeight - innerHeight), behavior: 'smooth' });
+    }));
+    size(); read(); cur = target; apply(cur);
+  })();
   window.__arkhera = { WA, reduce };
 })();
 </script>
@@ -756,16 +830,14 @@ document.documentElement.classList.add('js');
 } }
 </script>
 <script type="module">
-import * as THREE from 'three';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+// three.js loads only when the configurator comes near the screen
+let THREE, RoomEnvironment, RoundedBoxGeometry;
+async function loadThree() {
+  const [core, env, rb] = await Promise.all([import('three'), import('three/addons/environments/RoomEnvironment.js'), import('three/addons/geometries/RoundedBoxGeometry.js')]);
+  THREE = core; RoomEnvironment = env.RoomEnvironment; RoundedBoxGeometry = rb.RoundedBoxGeometry;
+}
 
-const qs = new URLSearchParams(location.search);
-const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const NARROW = () => innerWidth <= 760;
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
-const smooth = (a, b, v) => { const x = clamp((v - a) / (b - a)); return x * x * (3 - 2 * x); };
-const lerp = (a, b, k) => a + (b - a) * k;
 function hasWebGL2() { try { return !!document.createElement('canvas').getContext('webgl2'); } catch { return false; } }
 
 /* ---------------- procedural textures ---------------- */
@@ -848,24 +920,6 @@ function makeTextures() {
   T.blob = tex(128, 128, (c, w, h) => { const g = c.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.fillRect(0, 0, w, h); });
   return T;
 }
-function sky(dusk) {
-  return tex(1024, 512, (c, w, h) => {
-    const r = rng(dusk ? 41 : 43), g = c.createLinearGradient(0, 0, 0, h);
-    if (dusk) { g.addColorStop(0, '#1d2140'); g.addColorStop(.45, '#5a3f5c'); g.addColorStop(.66, '#d0805a'); g.addColorStop(.74, '#f0b27a'); }
-    else { g.addColorStop(0, '#9fbbd3'); g.addColorStop(.6, '#d9e2e6'); g.addColorStop(.74, '#eef0ea'); }
-    c.fillStyle = g; c.fillRect(0, 0, w, h);
-    // a distant skyline
-    let x = 0;
-    while (x < w) {
-      const bw = 18 + r() * 46, bh = 30 + r() * (r() < .15 ? 150 : 80), y = h * .74 - bh;
-      c.fillStyle = dusk ? '#221d29' : `rgba(120,132,140,${.55 + r() * .25})`; c.fillRect(x, y, bw, h);
-      if (dusk) for (let wy = y + 6; wy < h * .74 - 4; wy += 7) for (let wx = x + 3; wx < x + bw - 3; wx += 6) if (r() < .3) { c.fillStyle = `rgba(255,${190 + r() * 50},120,${.5 + r() * .5})`; c.fillRect(wx, wy, 2, 3); }
-      x += bw + r() * 6;
-    }
-    c.fillStyle = dusk ? '#17141c' : '#7d8a8e'; c.fillRect(0, h * .74, w, h);
-  });
-}
-
 /* ---------------- materials ---------------- */
 function makeLibrary(T, clip) {
   const std = (o) => new THREE.MeshStandardMaterial({ clippingPlanes: clip, clipShadows: !!clip, ...o });
@@ -902,9 +956,9 @@ function makeLibrary(T, clip) {
   return L;
 }
 function rbox(w, h, d, r = .02, s = 2) { const g = new RoundedBoxGeometry(w, h, d, s, Math.min(r, w / 2 - .001, h / 2 - .001, d / 2 - .001)); g.userData.proxy = new THREE.BoxGeometry(w, h, d); return g; }
-const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+function box(w, h, d) { return new THREE.BoxGeometry(w, h, d); }
 
-/* ---------------- the wall unit (film and configurator share it) ----------------
+/* ---------------- the wall unit ----------------
    origin: floor, centre of the wall; the unit stands in front of the wall (+z). */
 function buildWallUnit(o, env) {
   const { L, mk, mkInst, led } = env, g = new THREE.Group();
@@ -948,321 +1002,6 @@ function buildWallUnit(o, env) {
   return g;
 }
 
-/* ---------------- the film ---------------- */
-const film = document.getElementById('film');
-const filmOk = !REDUCE && !qs.has('still') && hasWebGL2();
-if (!filmOk) { film.classList.add('is-still'); film.querySelector('picture source').remove(); Object.assign(film.querySelector('.poster'), { src: 'img/film-still.webp', alt: 'Arkhera’nın tasarladığı salon akşam ışığında: ceviz çıtalı TV duvarı, mermer panel, krem L koltuk ve gizli LED’li tavan' }); }
-if (filmOk) initFilm().catch(e => { console.error(e); film.classList.add('is-still'); });
-
-async function initFilm() {
-  const T_END = 12;
-  const canvas = document.getElementById('film-canvas');
-  const capture = qs.has('capture');
-  if (capture) document.body.classList.add('capture');
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: capture });
-  renderer.localClippingEnabled = true;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.02;
-  renderer.shadowMap.enabled = true; renderer.shadowMap.type = NARROW() ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
-  renderer.setClearColor(0x14100d);
-  const scene = new THREE.Scene();
-  const pmrem = new THREE.PMREMGenerator(renderer);
-  scene.environment = pmrem.fromScene(new RoomEnvironment(), .04).texture;
-  const camera = new THREE.PerspectiveCamera(45, 1, .05, 80);
-
-  const T = makeTextures();
-  // clipping: Y rises to extrude the model out of the plan; S sweeps right→left from clay to finished materials
-  const planeY = new THREE.Plane(new THREE.Vector3(0, -1, 0), 0);
-  const clayS = new THREE.Plane(new THREE.Vector3(-1, 0, 0), 4);
-  const finS = new THREE.Plane(new THREE.Vector3(1, 0, 0), -4);
-  const L = makeLibrary(T, [finS]);
-  const CLAY = new THREE.MeshStandardMaterial({ color: 0xebe7e1, roughness: .88, clippingPlanes: [planeY, clayS], clipShadows: true, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
-  const SHELL = new THREE.MeshStandardMaterial({ map: T.concrete, roughness: .95, clippingPlanes: [planeY, clayS], clipShadows: true, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
-  const FLOORCLAY = new THREE.MeshStandardMaterial({ map: T.concrete, color: 0xbab5ae, roughness: .95, clippingPlanes: [clayS] });
-  const LEDMAT = new THREE.MeshBasicMaterial({ color: 0xffd9a0, toneMapped: false, clippingPlanes: [finS] });
-  const GLOWMAT = new THREE.MeshBasicMaterial({ map: T.glow, color: 0xffc27a, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false, side: THREE.DoubleSide });
-  const clays = [], finals = [], lineParts = [], leds = [];
-
-  function mk(geo, mat, { cast = true, receive = true, lines = true, clay = CLAY } = {}) {
-    const grp = new THREE.Group();
-    const c = new THREE.Mesh(geo, clay), f = new THREE.Mesh(geo, mat);
-    c.castShadow = f.castShadow = cast; c.receiveShadow = f.receiveShadow = receive;
-    grp.add(c, f); clays.push(c); finals.push(f);
-    if (lines) lineParts.push(c);
-    return grp;
-  }
-  function mkInst(geo, mat, matrices) {
-    const grp = new THREE.Group();
-    for (const m of [CLAY, mat]) {
-      const im = new THREE.InstancedMesh(geo, m, matrices.length);
-      matrices.forEach((mx, i) => im.setMatrixAt(i, mx));
-      im.castShadow = im.receiveShadow = true; grp.add(im); (m === CLAY ? clays : finals).push(im);
-    }
-    return grp;
-  }
-  const led = geo => { const m = new THREE.Mesh(geo, LEDMAT); leds.push(m); return m; };
-  const env = { L, mk, mkInst, led };
-
-  /* room: 6 × 5 m, 2.9 m high; window in the left wall */
-  const RW = 6, RD = 5, RH = 2.9, room = new THREE.Group(); scene.add(room);
-  const put = (m, x, y, z, p = room) => { m.position.set(x, y, z); p.add(m); return m; };
-  const floorGeo = new THREE.PlaneGeometry(RW, RD); floorGeo.rotateX(-Math.PI / 2);
-  put(mk(floorGeo, L.floor, { clay: FLOORCLAY, cast: false, lines: false }), 0, 0, 0);
-  const wall = (w, h, d, x, y, z) => put(mk(box(w, h, d), L.plaster, { clay: SHELL, lines: false }), x, y, z);
-  wall(RW + .3, RH, .15, 0, RH / 2, -RD / 2 - .075);
-  wall(.15, RH, RD, RW / 2 + .075, RH / 2, 0);
-  const winZ = 1.6, winTop = 2.55;
-  wall(.15, RH, RD / 2 - winZ, -RW / 2 - .075, RH / 2, -(winZ + RD / 2) / 2);
-  wall(.15, RH, RD / 2 - winZ, -RW / 2 - .075, RH / 2, (winZ + RD / 2) / 2);
-  wall(.15, RH - winTop, winZ * 2, -RW / 2 - .075, (RH + winTop) / 2, 0);
-  wall(.15, .05, winZ * 2, -RW / 2 - .075, .025, 0);
-  // skirting
-  put(mk(box(RW, .07, .012), L.plaster, { lines: false, cast: false }), 0, .035, -RD / 2 + .006);
-  // window frame
-  for (const z of [-winZ, -winZ / 3, winZ / 3, winZ]) put(mk(box(.06, winTop - .05, .045), L.black, { lines: false }), -RW / 2 - .02, (winTop + .05) / 2, z);
-  for (const y of [.05, 2.1, winTop]) put(mk(box(.06, .045, winZ * 2), L.black, { lines: false }), -RW / 2 - .02, y, 0);
-  // ceiling: perimeter bulkhead and a raised centre with hidden LED along its edge
-  const bk = .45, bkY = 2.64;
-  const ceil = new THREE.Group(); room.add(ceil);
-  const cpiece = (w, d, x, z, y, h) => put(mk(box(w, h, d), L.ceiling, { clay: SHELL, lines: false, cast: false }), x, y, z, ceil);
-  cpiece(RW, bk, 0, -RD / 2 + bk / 2, (bkY + RH) / 2, RH - bkY);
-  cpiece(RW, bk, 0, RD / 2 - bk / 2, (bkY + RH) / 2, RH - bkY);
-  cpiece(bk, RD - 2 * bk, -RW / 2 + bk / 2, 0, (bkY + RH) / 2, RH - bkY);
-  cpiece(bk, RD - 2 * bk, RW / 2 - bk / 2, 0, (bkY + RH) / 2, RH - bkY);
-  cpiece(RW - 2 * bk, RD - 2 * bk, 0, 0, RH + .06, .04);
-  const iw = RW - 2 * bk, id = RD - 2 * bk;
-  for (const [w, d, x, z] of [[iw, .012, 0, -id / 2 + .006], [iw, .012, 0, id / 2 - .006], [.012, id, -iw / 2 + .006, 0], [.012, id, iw / 2 - .006, 0]]) put(led(box(w, .012, d)), x, bkY + .006, z, ceil);
-  const glows = [];
-  // light pooling on the raised ceiling from the hidden LEDs, and washing down the back wall
-  // each pool is brightest at its LED edge and fades towards the middle of the ceiling
-  for (const [len, rot, x, z] of [[iw, 0, 0, -id / 2], [iw, Math.PI, 0, id / 2], [id, Math.PI / 2, -iw / 2, 0], [id, -Math.PI / 2, iw / 2, 0]]) {
-    const g = new THREE.Mesh(new THREE.PlaneGeometry(len, .9), GLOWMAT); g.rotation.x = -Math.PI / 2; g.position.z = .45;
-    const m = new THREE.Group(); m.rotation.y = rot; m.position.set(x, RH + .035, z); m.add(g); room.add(m); glows.push(g);
-  }
-  const wash = new THREE.Mesh(new THREE.PlaneGeometry(RW, 1.1), GLOWMAT); wash.position.set(0, bkY - .55, -RD / 2 + .06); room.add(wash); glows.push(wash);
-
-  /* furniture */
-  const unit = buildWallUnit({ width: 3.6, body: 'ceviz', panel: 'mermer', metal: 'pirinc', led: true }, env);
-  unit.position.set(0, 0, -RD / 2); room.add(unit);
-  const underGlow = new THREE.Mesh(new THREE.PlaneGeometry(3.4, .7), new THREE.MeshBasicMaterial({ map: T.blob, color: 0xffb46a, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
-  underGlow.rotation.x = -Math.PI / 2; underGlow.position.set(0, .004, -RD / 2 + .3); room.add(underGlow);
-
-  // L sofa in bouclé facing the unit, back to the camera, chaise towards the window wall
-  const sofa = new THREE.Group(); sofa.position.set(.2, 0, .9); room.add(sofa);
-  const S = (geo, mat, x, y, z, o) => put(mk(geo, mat, o), x, y, z, sofa);
-  S(box(2.9, .12, .9), L.backer, -.0, .06, 0, { lines: false });
-  for (let i = 0; i < 3; i++) S(rbox(.9, .2, .82, .06, 3), L.boucle, -1.0 + i * .94, .23, -.03);
-  S(rbox(2.95, .44, .22, .08, 3), L.boucle, 0, .45, .36);
-  S(rbox(.2, .46, .92, .08, 3), L.boucle, 1.48, .35, 0);
-  // chaise
-  S(box(.92, .12, 1.0), L.backer, -1.0, .06, -.95, { lines: false });
-  S(rbox(.92, .2, 1.0, .06, 3), L.boucle, -1.0, .23, -.98);
-  S(rbox(.2, .46, 1.9, .08, 3), L.boucle, -1.56, .35, -.5);
-  const pil = (mat, x, z, ry) => { const p = S(rbox(.46, .42, .14, .06, 3), mat, x, .52, z); p.rotation.set(.25, ry, 0); };
-  pil(L.pillowA, .95, .18, -.1); pil(L.pillowB, .5, .2, .08); pil(L.pillowB, -1.3, .2, .35);
-
-
-  // rug, travertine coffee table, brass bowl
-  put(mk(box(3.3, .012, 2.3), L.rug, { cast: false }), .3, .006, -.6);
-  const table = new THREE.Group(); table.position.set(.45, 0, -.85); room.add(table);
-  put(mk(new THREE.CylinderGeometry(.36, .36, .3, 48), L.walnut), 0, .162, 0, table);
-  put(mk(new THREE.CylinderGeometry(.58, .58, .055, 64), L.travertine), 0, .34, 0, table);
-  const bowl = put(mk(new THREE.SphereGeometry(.14, 32, 12, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), L.brass, { lines: false }), -.18, .48, .05, table); bowl.scale.y = .55;
-  put(mk(box(.3, .05, .22), L.ceramic, { lines: false }), .2, .392, -.08, table);
-
-  // lounge chair by the window
-  const chair = new THREE.Group(); chair.position.set(-2.05, 0, -.55); chair.rotation.y = Math.PI / 2.6; room.add(chair);
-  put(mk(rbox(.74, .16, .72, .05, 3), L.leather), 0, .36, 0, chair);
-  const back = put(mk(rbox(.74, .58, .14, .05, 3), L.leather), 0, .66, .32, chair); back.rotation.x = -.22;
-  for (const [x, z] of [[-.32, -.3], [.32, -.3], [-.32, .3], [.32, .3]]) put(mk(new THREE.CylinderGeometry(.018, .014, .28, 10), L.walnut), x, .14, z, chair);
-
-  // olive tree in a stone pot, corner between window and unit
-  const tree = new THREE.Group(); tree.position.set(-2.45, 0, -1.95); room.add(tree);
-  put(mk(new THREE.LatheGeometry([[0, 0], [.2, 0], [.25, .1], [.24, .48], [0, .48]].map(p => new THREE.Vector2(...p)), 28), L.travertine), 0, 0, 0, tree);
-  put(mk(new THREE.CylinderGeometry(.025, .04, 1.1, 8), L.walnut, { lines: false }), 0, 1.0, 0, tree);
-  const rr = rng(77);
-  for (let i = 0; i < 9; i++) { const f = put(mk(new THREE.IcosahedronGeometry(.18 + rr() * .1, 1), L.foliage, { lines: false }), (rr() - .5) * .55, 1.45 + rr() * .5, (rr() - .5) * .55, tree); f.scale.y = .8; }
-
-  // arc floor lamp over the sofa
-  put(mk(new THREE.CylinderGeometry(.17, .17, .05, 40), L.marble), 2.4, .025, -.2);
-  const arc = new THREE.CatmullRomCurve3([[2.4, .05, -.2], [2.4, 1.6, -.2], [2.1, 2.15, .15], [1.6, 2.05, .5], [1.45, 1.85, .6]].map(p => new THREE.Vector3(...p)));
-  put(mk(new THREE.TubeGeometry(arc, 48, .012, 8), L.brass, { lines: false }), 0, 0, 0);
-  const shadeMat = L.brass.clone(); shadeMat.side = THREE.DoubleSide;
-  put(mk(new THREE.SphereGeometry(.2, 32, 12, 0, Math.PI * 2, 0, Math.PI / 2), shadeMat, { lines: false }), 1.45, 1.85, .6);
-  const bulb = new THREE.Mesh(new THREE.SphereGeometry(.07, 16, 8), LEDMAT); bulb.position.set(1.45, 1.82, .6); room.add(bulb); leds.push(bulb);
-  const lampLight = new THREE.PointLight(0xffb36b, 0, 6, 2); lampLight.position.set(1.45, 1.7, .6); room.add(lampLight);
-
-  // art on the right wall, sheer curtains at the window
-  put(mk(box(.03, .9, 1.2), L.art, { cast: false }), RW / 2 - .02, 1.55, -.4);
-  const curtainGeo = new THREE.PlaneGeometry(.95, 2.48, 48, 1);
-  { const p = curtainGeo.attributes.position; for (let i = 0; i < p.count; i++) p.setZ(i, Math.sin(p.getX(i) * 34) * .035); curtainGeo.computeVertexNormals(); }
-  for (const z of [-2.0, 2.0]) { const c = put(mk(curtainGeo, L.curtain, { lines: false, cast: false }), -RW / 2 + .14, 1.3, z); c.rotation.y = Math.PI / 2; }
-  put(mk(box(.03, .03, RD - .2), L.black, { lines: false }), -RW / 2 + .14, 2.58, 0);
-
-  // outside: day and dusk sky with a skyline
-  const skyGeo = new THREE.PlaneGeometry(34, 17);
-  const skyDay = new THREE.Mesh(skyGeo, new THREE.MeshBasicMaterial({ map: sky(false), toneMapped: false }));
-  const skyDusk = new THREE.Mesh(skyGeo, new THREE.MeshBasicMaterial({ map: sky(true), toneMapped: false, transparent: true, opacity: 0, depthWrite: false }));
-  for (const [m, x] of [[skyDay, -11], [skyDusk, -10.9]]) { m.rotation.y = Math.PI / 2; m.position.set(x, 1.4, 0); scene.add(m); }
-
-  // the sweep line between clay and finished
-  // drawn where the sweep plane meets the floor, the back wall and the ceiling, like a scan line
-  const sweepMat = new THREE.MeshBasicMaterial({ color: 0xffd79a, transparent: true, opacity: 0, depthWrite: false, toneMapped: false });
-  const sweep = new THREE.Group(); scene.add(sweep);
-  for (const [w, h, d, y, z] of [[.014, .006, RD, .004, 0], [.014, RH, .006, RH / 2, -RD / 2 + .004], [.014, .006, RD, RH + .03, 0]]) { const m = new THREE.Mesh(box(w, h, d), sweepMat); m.position.set(0, y, z); sweep.add(m); }
-
-  /* lights */
-  const sun = new THREE.DirectionalLight(0xfff1de, 0);
-  sun.castShadow = true; sun.shadow.mapSize.set(NARROW() ? 1024 : 2048, NARROW() ? 1024 : 2048);
-  Object.assign(sun.shadow.camera, { left: -5.5, right: 5.5, top: 5.5, bottom: -5.5, near: 1, far: 30 });
-  sun.shadow.bias = -.0004; sun.shadow.normalBias = .02; sun.shadow.radius = 4;
-  scene.add(sun, sun.target); sun.target.position.set(.5, 0, .3);
-  const fill = new THREE.HemisphereLight(0xf2ece4, 0x5b4636, 0); scene.add(fill);
-  const coveA = new THREE.PointLight(0xffc98a, 0, 7, 2), coveB = coveA.clone(); coveA.position.set(0, 2.55, -1.3); coveB.position.set(0, 2.55, 1.2); scene.add(coveA, coveB);
-
-  /* plan drawing: walls and dimensions (drawn on load), then furniture footprints (drawn by scroll) */
-  const planPts = [];
-  const seg = (a, b) => planPts.push(...a, ...b);
-  const y0 = .012, hx = RW / 2, hz = RD / 2;
-  seg([-hx, y0, -hz], [hx, y0, -hz]); seg([hx, y0, -hz], [hx, y0, hz]); seg([hx, y0, hz], [-hx, y0, hz]);
-  seg([-hx, y0, hz], [-hx, y0, winZ]); seg([-hx, y0, -winZ], [-hx, y0, -hz]);
-  seg([-hx - .15, y0, winZ], [-hx - .15, y0, -winZ]); seg([-hx - .15, y0, winZ], [-hx, y0, winZ]); seg([-hx - .15, y0, -winZ], [-hx, y0, -winZ]);
-  seg([-hx - .075, y0, winZ], [-hx - .075, y0, -winZ]);
-  const dim = (a, b, n) => { seg(a, b); for (const p of [a, b]) seg([p[0] - n[0] * .12, y0, p[2] - n[2] * .12], [p[0] + n[0] * .12, y0, p[2] + n[2] * .12]); };
-  dim([-hx, y0, -hz - .45], [hx, y0, -hz - .45], [0, 0, 1]);
-  dim([hx + .45, y0, -hz], [hx + .45, y0, hz], [1, 0, 0]);
-  dim([-hx - .5, y0, -winZ], [-hx - .5, y0, winZ], [1, 0, 0]);
-  const planGeo = new THREE.BufferGeometry(); planGeo.setAttribute('position', new THREE.Float32BufferAttribute(planPts, 3));
-  const planMat = new THREE.LineBasicMaterial({ color: 0xf1ebe2, transparent: true, opacity: 0, depthWrite: false });
-  const planLines = new THREE.LineSegments(planGeo, planMat); scene.add(planLines);
-
-  scene.updateMatrixWorld(true);
-  const fp = [];
-  for (const m of lineParts) {
-    const e = new THREE.EdgesGeometry(m.geometry.userData.proxy || m.geometry, 24);
-    e.applyMatrix4(m.matrixWorld); fp.push(...e.attributes.position.array); e.dispose();
-  }
-  const fpGeo = new THREE.BufferGeometry(); fpGeo.setAttribute('position', new THREE.Float32BufferAttribute(fp, 3));
-  const fpMat = new THREE.LineBasicMaterial({ color: 0xd2aa6c, transparent: true, opacity: 0, depthWrite: false });
-  const fpLines = new THREE.LineSegments(fpGeo, fpMat); scene.add(fpLines);
-  const fpCount = fp.length / 3, planCount = planPts.length / 3;
-
-  /* camera path */
-  const V = (a) => new THREE.Vector3(...a);
-  const keysWide = [
-    [0, [-2.7, 12.6, .5], [-2.7, 0, 0], 38], [2.1, [-1.6, 11.8, 1.0], [-1.6, 0, 0], 38],
-    [4.2, [2.7, 1.75, 3.9], [-.5, 1.05, -1.2], 50], [7.2, [2.1, 1.45, 2.3], [-.8, 1.05, -1.6], 54],
-    [8.8, [1.6, 1.4, 2.35], [-1.3, 1.15, -1.0], 56], [10.4, [.4, 1.5, 2.35], [-.7, 1.25, -1.5], 56],
-    [12, [2.55, 1.62, 2.35], [-.9, 1.15, -1.2], 60]];
-  const keysTall = [
-    [0, [0, 20, .4], [0, 0, -4.1], 50], [2.1, [0, 18.5, .9], [0, 0, -3.2], 50],
-    [4.2, [2.4, 1.9, 5.4], [-.3, 1.15, -1.4], 66], [7.2, [1.5, 1.5, 2.4], [-.3, 1.1, -2.0], 72],
-    [8.8, [.9, 1.45, 2.4], [-1.1, 1.2, -1.2], 72], [10.4, [.2, 1.55, 2.4], [-.3, 1.3, -1.6], 72],
-    [12, [2.3, 1.65, 2.4], [-.6, 1.2, -1.4], 74]];
-  const pos = new THREE.Vector3(), tgt = new THREE.Vector3();
-  function shot(t) {
-    const keys = camera.aspect < .9 ? keysTall : keysWide;
-    let i = 0; while (i < keys.length - 2 && t > keys[i + 1][0]) i++;
-    const [ta, pa, qa, fa] = keys[i], [tb, pb, qb, fb] = keys[i + 1];
-    const k = smooth(ta, tb, t);
-    pos.lerpVectors(V(pa), V(pb), k); tgt.lerpVectors(V(qa), V(qb), k);
-    camera.fov = lerp(fa, fb, k);
-    camera.position.copy(pos); camera.lookAt(tgt); camera.updateProjectionMatrix();
-  }
-
-  /* overlays */
-  const intro = film.querySelector('.intro'), chaps = [...film.querySelectorAll('.chap')], endEl = film.querySelector('.end');
-  const railBtns = [...film.querySelectorAll('.rail button')];
-  const tags = [...film.querySelectorAll('.tag')].map(el => ({ el, at: new THREE.Vector3(...el.dataset.at.split(',').map(Number)), from: +el.dataset.from, to: +el.dataset.to }));
-  const v3 = new THREE.Vector3();
-  let W = 1, H = 1;
-
-  /* state for a film time t */
-  const dayCol = new THREE.Color(0xfff1de), duskCol = new THREE.Color(0xff9a5c);
-  let introK = capture ? 1 : 0;
-  function apply(t) {
-    shot(t);
-    const h = lerp(0, 3.1, smooth(2.3, 4.45, t));
-    planeY.constant = h;
-    const s = lerp(3.4, -3.4, smooth(4.9, 7.5, t));
-    clayS.constant = s; finS.constant = -s;
-    sweep.position.x = s; sweepMat.opacity = t > 4.85 && t < 7.55 ? 1 : 0;
-    const showClay = t < 7.55, showFin = t > 4.85;
-    for (const m of clays) m.visible = showClay;
-    for (const m of finals) m.visible = showFin;
-    // ceiling only once the camera is inside and the model has risen
-    ceil.visible = h > 2.6;
-    planMat.opacity = (1 - smooth(2.2, 3.2, t)) * .85; planGeo.setDrawRange(0, Math.floor(planCount * introK / 2) * 2);
-    fpMat.opacity = (1 - smooth(3.9, 4.8, t)) * .9; fpGeo.setDrawRange(0, Math.floor(fpCount * smooth(.05, 1.9, t) / 2) * 2);
-    // light: soft daylight, then dusk with the LEDs and lamp coming on
-    const dusk = smooth(8.4, 10.0, t), on = smooth(9.0, 10.0, t), lamp = smooth(9.4, 10.3, t);
-    sun.intensity = lerp(3.2, .35, dusk); sun.color.lerpColors(dayCol, duskCol, dusk);
-    sun.position.set(-9, lerp(6.5, 2.6, dusk), lerp(2.6, 3.4, dusk));
-    scene.environmentIntensity = lerp(.6, .2, dusk);
-    fill.intensity = lerp(.5, .12, dusk);
-    skyDusk.material.opacity = dusk; skyDay.visible = skyDusk.visible = camera.position.y < 4;
-    LEDMAT.color.setRGB(lerp(.72, 2.2, on), lerp(.7, 1.87, on), lerp(.66, 1.36, on));
-    for (const l of leds) l.visible = on > .01 || t > 4.85;
-    GLOWMAT.opacity = on * .75; underGlow.material.opacity = on * .55;
-    coveA.intensity = coveB.intensity = on * 6; lampLight.intensity = lamp * 4.5; bulb.visible = lamp > .02;
-    renderer.toneMappingExposure = lerp(1.02, 1.12, dusk);
-    // overlays
-    intro.classList.toggle('off', t > .35);
-    chaps.forEach(c => c.classList.toggle('on', t >= +c.dataset.from && t < +c.dataset.to));
-    endEl.classList.toggle('on', t > 11.05);
-    const ci = t < 2.35 ? 0 : t < 4.85 ? 1 : t < 8.3 ? 2 : 3;
-    railBtns.forEach((b, i) => { b.classList.toggle('on', i === ci); b.setAttribute('aria-current', i === ci ? 'step' : 'false'); });
-    for (const g of tags) {
-      v3.copy(g.at).project(camera);
-      const vis = t >= g.from && t < g.to && v3.z < 1 && (g.from >= 0 || introK > .85);
-      g.el.classList.toggle('on', vis);
-      if (!vis) continue;
-      const x = (v3.x * .5 + .5) * W, y = (-v3.y * .5 + .5) * H;
-      const flip = x > W * .62 && !g.el.classList.contains('dim');
-      g.el.classList.toggle('flip', flip);
-      const off = g.el.classList.contains('dim') ? -g.el.offsetWidth / 2 : flip ? -g.el.offsetWidth + 5 : -5;
-      const left = clamp(x + off, 8, W - g.el.offsetWidth - 8);
-      g.el.style.transform = `translate3d(${left.toFixed(1)}px,${(y - g.el.offsetHeight / 2).toFixed(1)}px,0)`;
-    }
-  }
-
-  /* sizing */
-  function resize() {
-    W = canvas.clientWidth; H = canvas.clientHeight;
-    renderer.setPixelRatio(Math.min(devicePixelRatio, NARROW() ? 1.25 : 1.5));
-    renderer.setSize(W, H, false);
-    camera.aspect = W / H; dirty = true;
-  }
-
-  /* scroll → film time, eased so wheel steps glide */
-  let target = 0, cur = 0, dirty = true;
-  const progress = () => { const r = film.getBoundingClientRect(); return clamp(-r.top / Math.max(1, r.height - innerHeight)); };
-  const readScroll = () => { if (!capture) target = progress() * T_END; };
-  addEventListener('scroll', readScroll, { passive: true });
-  addEventListener('resize', () => { resize(); readScroll(); });
-  railBtns.forEach(b => b.addEventListener('click', () => {
-    const y = film.offsetTop + (+b.dataset.go / T_END) * (film.offsetHeight - innerHeight);
-    scrollTo({ top: y, behavior: 'smooth' });
-  }));
-
-  resize(); readScroll(); cur = target;
-  apply(cur);
-  renderer.compile(scene, camera);
-  film.classList.add('ready');
-
-  let last = performance.now(), introStart = last, visible = true;
-  new IntersectionObserver(([e]) => { visible = e.isIntersecting; }).observe(film);
-  function frame(now) {
-    const dt = Math.min(.1, (now - last) / 1000); last = now;
-    if (introK < 1) { introK = clamp((now - introStart) / 1700); introK = 1 - Math.pow(1 - introK, 3); dirty = true; }
-    if (Math.abs(target - cur) > .0005) { cur += (target - cur) * Math.min(1, dt * 7); dirty = true; }
-    if (dirty && visible) { apply(cur); renderer.render(scene, camera); dirty = false; }
-    requestAnimationFrame(frame);
-  }
-  requestAnimationFrame(frame);
-
-  if (capture) window.__film = { seek(t) { cur = target = t; introK = 1; apply(t); renderer.render(scene, camera); return true; }, canvas, scene, renderer, THREE };
-}
-
 /* ---------------- configurator ---------------- */
 const view = document.getElementById('cfg-view');
 const cfgForm = document.getElementById('cfg-form');
@@ -1285,7 +1024,7 @@ cfgForm.addEventListener('input', () => describe(readCfg()));
 cfgForm.addEventListener('submit', e => e.preventDefault());
 
 if (hasWebGL2()) {
-  const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { io.disconnect(); initConfigurator(); } }, { rootMargin: '600px 0px' });
+  const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { io.disconnect(); loadThree().then(initConfigurator).catch(() => { view.querySelector('.note').textContent = '3D görünüm yüklenemedi; seçimler ve teklif mesajı çalışır.'; }); } }, { rootMargin: '600px 0px' });
   io.observe(view);
 } else view.querySelector('.note').textContent = 'Bu cihazda 3D görünüm açılamadı; seçimler ve teklif mesajı çalışır.';
 

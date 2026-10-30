@@ -863,142 +863,139 @@ function grain(ctx, w, h, base, dark, light, n, seed) {
 }
 function makeTextures() {
   const T = {};
-  T.walnut = tex(512, 1024, (c, w, h) => grain(c, w, h, '#5e3d29', '#2f1d12', '#8a6143', 260, 7));
-  T.walnutSlat = T.walnut.clone(); T.walnutSlat.repeat.set(.07, 1);
-  T.oak = tex(512, 1024, (c, w, h) => grain(c, w, h, '#b48a5c', '#7a5534', '#d2ac7d', 220, 11));
-  T.oakSlat = T.oak.clone(); T.oakSlat.repeat.set(.07, 1);
-  T.lacquer = tex(64, 64, (c, w, h) => { c.fillStyle = '#fff'; c.fillRect(0, 0, w, h); });
-  // chevron parquet: alternate columns of planks slanted at 45°
+  const wood = (base, dark, light, seed) => tex(512, 1024, (c, w, h) => grain(c, w, h, base, dark, light, 240, seed));
+  T.walnut = wood('#5b3a26', '#2e1c11', '#86603f', 7);
+  T.oak = wood('#b8905f', '#7c5735', '#d6b285', 11);
+  // fronts and tops: grain runs along the cabinet; slats: a narrow vertical strip of the board
+  for (const k of ['walnut', 'oak']) {
+    const along = T[k].clone(); along.center.set(.5, .5); along.rotation = Math.PI / 2; T[k + 'Along'] = along;
+    const slat = T[k].clone(); slat.repeat.set(.07, 1); T[k + 'Slat'] = slat;
+  }
+  // chevron oak parquet, as in the opening room
   T.floor = tex(1024, 1024, (c, w, h) => {
-    const r = rng(3), a = 128, b = 48;
-    c.fillStyle = '#6e4d31'; c.fillRect(0, 0, w, h);
-    for (let col = 0; col < w / a; col++) for (let row = -4; row < h / b + 4; row++) {
-      const x0 = col * a, y0 = row * b, up = col % 2 === 0;
-      const tone = 150 + r() * 40;
-      c.fillStyle = `rgb(${tone + 22},${tone - 12},${tone - 58})`;
+    const r = rng(3), a = 128, b = 40;
+    c.fillStyle = '#8c6a46'; c.fillRect(0, 0, w, h);
+    for (let col = 0; col < w / a; col++) for (let row = -5; row < h / b + 5; row++) {
+      const x0 = col * a, y0 = row * b, up = col % 2 === 0, tone = 140 + r() * 34;
+      c.fillStyle = `rgb(${tone + 34},${tone - 2},${tone - 54})`;
       c.beginPath();
       if (up) { c.moveTo(x0, y0 + a); c.lineTo(x0 + a, y0); c.lineTo(x0 + a, y0 + b); c.lineTo(x0, y0 + a + b); }
       else { c.moveTo(x0, y0); c.lineTo(x0 + a, y0 + a); c.lineTo(x0 + a, y0 + a + b); c.lineTo(x0, y0 + b); }
       c.closePath(); c.fill();
-      c.save(); c.clip(); c.globalAlpha = .18; c.strokeStyle = '#5a3a22';
-      for (let k = 0; k < 6; k++) { const o = r() * b; c.lineWidth = .6 + r(); c.beginPath(); if (up) { c.moveTo(x0, y0 + a + o); c.lineTo(x0 + a, y0 + o); } else { c.moveTo(x0, y0 + o); c.lineTo(x0 + a, y0 + a + o); } c.stroke(); }
+      c.save(); c.clip(); c.globalAlpha = .14; c.strokeStyle = '#6b4a2c';
+      for (let k = 0; k < 5; k++) { const o = r() * b; c.lineWidth = .5 + r(); c.beginPath(); if (up) { c.moveTo(x0, y0 + a + o); c.lineTo(x0 + a, y0 + o); } else { c.moveTo(x0, y0 + o); c.lineTo(x0 + a, y0 + a + o); } c.stroke(); }
       c.restore();
-      c.strokeStyle = 'rgba(60,38,22,.55)'; c.lineWidth = 1.2; c.stroke();
+      c.strokeStyle = 'rgba(90,62,38,.4)'; c.lineWidth = 1; c.stroke();
     }
-  }, { repeat: [2.6, 2.6] });
+  }, { repeat: [10, 6.25] });
+  // Calacatta: soft diagonal veins with a few sharper ones
   T.marble = tex(1024, 1024, (c, w, h) => {
-    const r = rng(5); c.fillStyle = '#efebe5'; c.fillRect(0, 0, w, h);
-    for (let v = 0; v < 26; v++) {
-      let x = r() * w, y = -20; const gold = r() < .18;
-      c.strokeStyle = gold ? 'rgba(176,140,86,.5)' : `rgba(120,118,116,${.15 + r() * .35})`; c.lineWidth = .6 + r() * (gold ? 2 : 3.5);
-      c.beginPath(); c.moveTo(x, y);
-      while (y < h + 20) { x += (r() - .45) * 46; y += 18 + r() * 30; c.lineTo(x, y); }
+    const r = rng(5); c.fillStyle = '#f1eee9'; c.fillRect(0, 0, w, h);
+    const vein = (blur, alpha, width) => {
+      c.filter = `blur(${blur}px)`; c.strokeStyle = `rgba(118,112,104,${alpha})`; c.lineWidth = width;
+      let x = r() * w * 1.4 - w * .2, y = -40; c.beginPath(); c.moveTo(x, y);
+      while (y < h + 40) { const nx = x + (r() - .3) * 90, ny = y + 50 + r() * 70; c.quadraticCurveTo(x + (r() - .5) * 60, (y + ny) / 2, nx, ny); x = nx; y = ny; }
       c.stroke();
-    }
+    };
+    for (let i = 0; i < 5; i++) vein(6, .18, 10);
+    for (let i = 0; i < 9; i++) vein(1.2, .38, 1.6);
+    for (let i = 0; i < 10; i++) vein(.4, .3, .7);
+    c.filter = 'none';
   });
   T.travertine = tex(512, 512, (c, w, h) => {
-    const r = rng(9); c.fillStyle = '#d4c2a5'; c.fillRect(0, 0, w, h);
-    for (let y = 0; y < h; y += 2 + r() * 6) { c.fillStyle = `rgba(${150 + r() * 60},${130 + r() * 50},${100 + r() * 40},.18)`; c.fillRect(0, y, w, 1 + r() * 4); }
-    for (let i = 0; i < 260; i++) { c.fillStyle = 'rgba(120,98,70,.35)'; c.beginPath(); c.ellipse(r() * w, r() * h, 1 + r() * 5, .5 + r() * 1.2, 0, 0, 7); c.fill(); }
+    const r = rng(9); c.fillStyle = '#d6c6ab'; c.fillRect(0, 0, w, h);
+    for (let y = 0; y < h; y += 2 + r() * 6) { c.fillStyle = `rgba(${150 + r() * 60},${130 + r() * 50},${100 + r() * 40},.16)`; c.fillRect(0, y, w, 1 + r() * 4); }
+    for (let i = 0; i < 240; i++) { c.fillStyle = 'rgba(120,98,70,.3)'; c.beginPath(); c.ellipse(r() * w, r() * h, 1 + r() * 5, .5 + r() * 1.2, 0, 0, 7); c.fill(); }
   });
-  T.concrete = tex(512, 512, (c, w, h) => {
-    const r = rng(13); c.fillStyle = '#a39e97'; c.fillRect(0, 0, w, h);
-    for (let i = 0; i < 90; i++) { const g = c.createRadialGradient(0, 0, 0, 0, 0, 40 + r() * 80); const v = 140 + r() * 40; g.addColorStop(0, `rgba(${v},${v - 3},${v - 6},.14)`); g.addColorStop(1, 'rgba(0,0,0,0)'); c.save(); c.translate(r() * w, r() * h); c.fillStyle = g; c.fillRect(-120, -120, 240, 240); c.restore(); }
-    for (let i = 0; i < 3000; i++) { c.fillStyle = r() < .5 ? 'rgba(70,68,64,.22)' : 'rgba(210,206,200,.2)'; c.fillRect(r() * w, r() * h, 1, 1); }
-  }, { repeat: [3, 3] });
-  T.plaster = tex(256, 256, (c, w, h) => { const r = rng(17); c.fillStyle = '#fff'; c.fillRect(0, 0, w, h); for (let i = 0; i < 2600; i++) { c.fillStyle = `rgba(150,140,128,${r() * .08})`; c.fillRect(r() * w, r() * h, 2, 2); } }, { repeat: [4, 2] });
-  T.fabric = tex(256, 256, (c, w, h) => { const r = rng(21); c.fillStyle = '#fff'; c.fillRect(0, 0, w, h); for (let i = 0; i < 5000; i++) { c.fillStyle = `rgba(120,108,92,${r() * .14})`; c.beginPath(); c.arc(r() * w, r() * h, .6 + r() * 1.6, 0, 7); c.fill(); } }, { repeat: [3, 3] });
-  T.rug = tex(512, 512, (c, w, h) => { const r = rng(25); c.fillStyle = '#b5a792'; c.fillRect(0, 0, w, h); for (let i = 0; i < 9000; i++) { c.fillStyle = `rgba(${r() < .5 ? '90,80,66' : '230,222,208'},${r() * .16})`; c.fillRect(r() * w, r() * h, 1 + r() * 2, 1); } c.strokeStyle = 'rgba(80,68,52,.35)'; c.lineWidth = 6; c.strokeRect(24, 24, w - 48, h - 48); });
-  T.art = tex(512, 384, (c, w, h) => {
-    const r = rng(31); c.fillStyle = '#e8e0d2'; c.fillRect(0, 0, w, h);
-    c.globalAlpha = .9; c.fillStyle = '#2a2420'; c.beginPath(); c.ellipse(w * .62, h * .48, 120, 140, .4, 0, 7); c.fill();
-    c.fillStyle = '#b08a5a'; c.beginPath(); c.ellipse(w * .36, h * .58, 90, 70, -.3, 0, 7); c.fill();
-    c.globalAlpha = .55; c.strokeStyle = '#2a2420'; c.lineWidth = 3; for (let i = 0; i < 6; i++) { c.beginPath(); c.moveTo(r() * w, r() * h); c.bezierCurveTo(r() * w, r() * h, r() * w, r() * h, r() * w, r() * h); c.stroke(); }
-  });
-  T.glow = tex(16, 256, (c, w, h) => { const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.25, 'rgba(255,255,255,.35)'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.fillRect(0, 0, w, h); });
-  T.glow.wrapS = T.glow.wrapT = THREE.ClampToEdgeWrapping;
+  T.plaster = tex(256, 256, (c, w, h) => { const r = rng(17); c.fillStyle = '#fff'; c.fillRect(0, 0, w, h); for (let i = 0; i < 2000; i++) { c.fillStyle = `rgba(150,140,128,${r() * .05})`; c.fillRect(r() * w, r() * h, 2, 2); } }, { repeat: [8, 3] });
+  T.screen = tex(256, 144, (c, w, h) => { const g = c.createLinearGradient(0, 0, w, h); g.addColorStop(0, '#24272d'); g.addColorStop(.45, '#0e1013'); g.addColorStop(1, '#08090b'); c.fillStyle = g; c.fillRect(0, 0, w, h); });
   T.blob = tex(128, 128, (c, w, h) => { const g = c.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.fillRect(0, 0, w, h); });
+  T.blob.wrapS = T.blob.wrapT = THREE.ClampToEdgeWrapping;
   return T;
 }
+
 /* ---------------- materials ---------------- */
-function makeLibrary(T, clip) {
-  const std = (o) => new THREE.MeshStandardMaterial({ clippingPlanes: clip, clipShadows: !!clip, ...o });
+function makeLibrary(T) {
+  const std = o => new THREE.MeshStandardMaterial(o);
+  const lacquer = color => std({ color, roughness: .4 });
   const L = {
-    walnut: std({ map: T.walnut, roughness: .55 }),
-    walnutSlat: std({ map: T.walnutSlat, roughness: .6 }),
-    oak: std({ map: T.oak, roughness: .55 }),
-    oakSlat: std({ map: T.oakSlat, roughness: .6 }),
-    antrasit: std({ color: 0x2f2d2b, roughness: .42 }),
-    krem: std({ color: 0xe6ded1, roughness: .45 }),
-    marble: std({ map: T.marble, roughness: .22 }),
-    travertine: std({ map: T.travertine, roughness: .72 }),
-    plaster: std({ map: T.plaster, color: 0xd9cfc1, roughness: .95 }),
-    ceiling: std({ map: T.plaster, color: 0xf0ebe3, roughness: .95 }),
-    floor: std({ map: T.floor, roughness: .48 }),
-    boucle: std({ map: T.fabric, color: 0xebe4d8, roughness: 1 }),
-    pillowA: std({ map: T.fabric, color: 0x8c6a4c, roughness: 1 }),
-    pillowB: std({ map: T.fabric, color: 0xcbbca4, roughness: 1 }),
-    leather: std({ color: 0x8a5634, roughness: .5 }),
-    brass: std({ color: 0xc9a063, metalness: 1, roughness: .28 }),
-    black: std({ color: 0x1b1a19, metalness: .6, roughness: .45 }),
-    backer: std({ color: 0x1d1612, roughness: .9 }),
-    tv: std({ color: 0x101216, roughness: .12, metalness: .4 }),
-    rug: std({ map: T.rug, roughness: 1 }),
-    ceramic: std({ color: 0xd8cdbd, roughness: .6 }),
-    ceramicDark: std({ color: 0x3a312a, roughness: .55 }),
-    foliage: std({ color: 0x4d5a3a, roughness: .9, flatShading: true }),
-    art: std({ map: T.art, roughness: .9 }),
-    curtain: new THREE.MeshStandardMaterial({ clippingPlanes: clip, color: 0xf3ede2, roughness: 1, transparent: true, opacity: .62, side: THREE.DoubleSide, depthWrite: false }),
+    marble: std({ map: T.marble, roughness: .18 }),
+    travertine: std({ map: T.travertine, roughness: .7 }),
+    wall: std({ map: T.plaster, color: 0xe6dac7, roughness: .95 }),
+    floor: std({ map: T.floor, roughness: .62 }),
+    brass: std({ color: 0xc9a063, metalness: 1, roughness: .26 }),
+    black: std({ color: 0x1b1a19, metalness: .6, roughness: .4 }),
+    backer: std({ color: 0x1e1712, roughness: .9 }),
+    tv: std({ map: T.screen, roughness: .08, metalness: .2 }),
+    tvFrame: std({ color: 0x111214, roughness: .5 }),
+    ceramic: std({ color: 0xece6dc, roughness: .55 }),
+    pot: std({ color: 0xf2eee8, roughness: .5 }),
+    foliage: std({ color: 0x4f6a3a, roughness: .85, flatShading: true }),
+    paper: std({ color: 0xe9e3d8, roughness: .9 }),
+  };
+  const antrasit = lacquer(0x2f2d2b), krem = lacquer(0xe4dccf);
+  // per body: [cabinet fronts and top, slats]
+  L.bodies = {
+    ceviz: [std({ map: T.walnutAlong, roughness: .5 }), std({ map: T.walnutSlat, roughness: .55 })],
+    mese: [std({ map: T.oakAlong, roughness: .5 }), std({ map: T.oakSlat, roughness: .55 })],
+    antrasit: [antrasit, antrasit],
+    krem: [krem, krem],
   };
   L.metals = { pirinc: L.brass, siyah: L.black };
-  L.bodies = { ceviz: [L.walnut, L.walnutSlat], mese: [L.oak, L.oakSlat], antrasit: [L.antrasit, L.antrasit], krem: [L.krem, L.krem] };
   L.panels = { mermer: L.marble, traverten: L.travertine };
   return L;
 }
-function rbox(w, h, d, r = .02, s = 2) { const g = new RoundedBoxGeometry(w, h, d, s, Math.min(r, w / 2 - .001, h / 2 - .001, d / 2 - .001)); g.userData.proxy = new THREE.BoxGeometry(w, h, d); return g; }
 function box(w, h, d) { return new THREE.BoxGeometry(w, h, d); }
 
-/* ---------------- the wall unit ----------------
-   origin: floor, centre of the wall; the unit stands in front of the wall (+z). */
-function buildWallUnit(o, env) {
-  const { L, mk, mkInst, led } = env, g = new THREE.Group();
-  const W = o.width, H = 2.62;
+/* ---------------- the TV wall from the opening room ----------------
+   Left to right: a narrow slat column, a stone panel with an inset metal frame and the TV, a wide slat
+   column; a floating cabinet of drawers runs the full width with LED light underneath.
+   Origin: floor, centre of the wall; the unit stands in front of the wall (+z). */
+const UNIT = { H: 2.7, panelH: 2.45, cabH: .32, cabD: .42, cabY: .22 };
+const drawerCount = W => Math.max(3, Math.round(W / .6));
+function buildWallUnit(o, L, ledMat) {
+  const g = new THREE.Group(), { H, panelH, cabH, cabD, cabY } = UNIT, W = o.width;
   const [bodyMat, slatMat] = L.bodies[o.body], metal = L.metals[o.metal];
-  const panelW = o.panel === 'cita' ? 0 : clamp(W * .44, 1.3, 2.0);
-  const add = (m, x, y, z) => { m.position.set(x, y, z); g.add(m); return m; };
-  add(mk(box(W, H, .012), L.backer, { lines: false }), 0, H / 2, .006);
-  // slats either side of the centre panel (or across it when the panel is slats too)
-  const pitch = .06, sw = .035, n = Math.floor((W - .02) / pitch), mats = [];
-  for (let i = 0; i < n; i++) {
-    const x = -W / 2 + .01 + pitch / 2 + i * pitch + ((W - .02) - n * pitch) / 2;
-    if (panelW && Math.abs(x) < panelW / 2 + .02) continue;
-    mats.push(new THREE.Matrix4().makeTranslation(x, H / 2, .012 + .0125));
+  const mesh = (geo, mat, x, y, z, shadow = true) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = m.receiveShadow = shadow; g.add(m); return m; };
+  const stone = o.panel !== 'cita';
+  const lw = W * .13, pw = stone ? W * .55 : 0, x0 = -W / 2, px = x0 + lw + pw / 2;
+  // slat columns on a dark backer
+  const pitch = .055, sw = .032, mats = [];
+  const column = (from, to) => {
+    mesh(box(to - from, H, .012), L.backer, (from + to) / 2, H / 2, .006, false);
+    const n = Math.floor((to - from) / pitch), pad = (to - from - n * pitch) / 2;
+    for (let i = 0; i < n; i++) mats.push(new THREE.Matrix4().makeTranslation(from + pad + pitch / 2 + i * pitch, H / 2, .0245));
+  };
+  if (stone) { column(x0, x0 + lw); column(x0 + lw + pw, W / 2); } else column(x0, W / 2);
+  const slats = new THREE.InstancedMesh(box(sw, H, .025), slatMat, mats.length);
+  mats.forEach((m, i) => slats.setMatrixAt(i, m)); slats.castShadow = slats.receiveShadow = true; g.add(slats);
+  // stone panel with an inset metal frame
+  const tvW = Math.min(1.65, (stone ? pw : W * .5) * .66), tvH = tvW * .5625, tvY = 1.42, tvX = stone ? px : 0;
+  if (stone) {
+    mesh(box(pw, panelH, .03), L.panels[o.panel], px, panelH / 2, .015);
+    const inset = Math.min(.14, pw * .07), fl = px - pw / 2 + inset, fr = px + pw / 2 - inset, fb = cabY + cabH + .06, ft = panelH - inset;
+    const bar = (w, h, x, y) => mesh(box(w, h, .006), metal, x, y, .033, false);
+    bar(fr - fl, .008, px, ft); bar(fr - fl, .008, px, fb); bar(.008, ft - fb, fl, (ft + fb) / 2); bar(.008, ft - fb, fr, (ft + fb) / 2);
   }
-  g.add(mkInst(box(sw, H, .025), slatMat, mats));
-  if (panelW) {
-    add(mk(box(panelW, H, .03), L.panels[o.panel]), 0, H / 2, .03);
-    for (const s of [-1, 1]) add(mk(box(.014, H, .04), metal, { lines: false }), s * (panelW / 2 + .007), H / 2, .03);
-    if (o.led) for (const s of [-1, 1]) add(led(box(.008, H - .1, .008)), s * (panelW / 2 + .02), H / 2, .045);
-  }
-  // television
-  const tvW = Math.min(1.45, (panelW || W * .5) * .78);
-  add(mk(box(tvW, tvW * .5625, .035), L.tv), 0, 1.3, .065);
-  // floating cabinet with push-to-open fronts
-  const cw = Math.max(1.4, W - .24), ch = .36, cd = .42, cy = .24 + ch / 2;
-  add(mk(rbox(cw, ch, cd, .008), bodyMat), 0, cy, .012 + cd / 2);
-  const doors = Math.max(2, Math.round(cw / .6));
-  for (let i = 1; i < doors; i++) add(mk(box(.004, ch - .03, .004), L.backer, { lines: false, cast: false }), -cw / 2 + i * cw / doors, cy, .012 + cd + .001);
-  add(mk(box(cw, .012, .02), metal, { lines: false }), 0, cy + ch / 2 - .006, .012 + cd - .01);
-  if (o.led) add(led(box(cw - .1, .008, .01)), 0, .236, .2);
-  // things on top
-  const top = cy + ch / 2;
-  const knot = mk(new THREE.TorusKnotGeometry(.075, .02, 96, 12, 2, 3), L.brass, { lines: false });
-  knot.scale.set(1, 1.35, 1); add(knot, cw * .3, top + .14, .22);
-  const vase = mk(new THREE.LatheGeometry([[0, 0], [.07, 0], [.095, .08], [.08, .22], [.04, .3], [.045, .34], [0, .34]].map(p => new THREE.Vector2(...p)), 28), L.ceramicDark, { lines: false });
-  add(vase, -cw * .32, top, .2);
-  add(mk(box(.26, .04, .19), L.ceramic, { lines: false }), -cw * .2, top + .02, .2);
-  add(mk(box(.24, .035, .17), bodyMat, { lines: false }), -cw * .2, top + .0575, .2);
-  g.userData = { W, H, panelW, cw, doors };
+  mesh(box(tvW + .012, tvH + .012, .03), L.tvFrame, tvX, tvY, .05);
+  mesh(box(tvW, tvH, .002), L.tv, tvX, tvY, .066, false);
+  // floating cabinet: a top, a carcass and a row of drawer fronts with shadow gaps
+  const n = drawerCount(W), gap = .006, fw = (W - gap * (n + 1)) / n;
+  mesh(box(W, .025, cabD), bodyMat, 0, cabY + cabH - .0125, cabD / 2);
+  mesh(box(W - .04, cabH - .025, cabD - .02), L.backer, 0, cabY + (cabH - .025) / 2, (cabD - .02) / 2, false);
+  for (const sx of [-1, 1]) mesh(box(.02, cabH, cabD), bodyMat, sx * (W / 2 - .01), cabY + cabH / 2, cabD / 2);
+  for (let i = 0; i < n; i++) mesh(box(fw, cabH - .035, .02), bodyMat, -W / 2 + gap + fw / 2 + i * (fw + gap), cabY + (cabH - .025) / 2, cabD - .01);
+  if (o.led) { const s = new THREE.Mesh(box(W - .06, .006, .01), ledMat); s.position.set(0, cabY - .004, cabD - .08); g.add(s); }
+  // the objects from the photo: a ring vase and a small vase on the left, a plant and books on the right
+  const top = cabY + cabH;
+  const ring = mesh(new THREE.TorusGeometry(.085, .04, 20, 40), L.ceramic, x0 + lw + .16, top + .125, cabD * .5); ring.scale.z = .7;
+  mesh(new THREE.SphereGeometry(.045, 20, 14), L.ceramic, x0 + lw + .32, top + .045, cabD * .55);
+  const rx = W / 2 - Math.min(.32, W * .09);
+  mesh(box(.24, .03, .17), L.paper, rx, top + .015, cabD * .5);
+  mesh(box(.22, .025, .16), L.paper, rx, top + .0425, cabD * .5);
+  mesh(new THREE.CylinderGeometry(.075, .06, .13, 28), L.pot, rx, top + .12, cabD * .5);
+  const rr = rng(11);
+  for (let i = 0; i < 6; i++) { const f = mesh(new THREE.IcosahedronGeometry(.06 + rr() * .03, 0), L.foliage, rx + (rr() - .5) * .16, top + .22 + rr() * .08, cabD * .5 + (rr() - .5) * .12); f.scale.y = .6; }
   return g;
 }
 
@@ -1012,8 +1009,8 @@ function readCfg() {
   return { width: +f.get('w') / 100, body: f.get('body'), panel: f.get('panel'), metal: f.get('metal'), led: f.get('led') === '1' };
 }
 function describe(o) {
-  const cm = Math.round(o.width * 100), cw = Math.max(1.4, o.width - .24), doors = Math.max(2, Math.round(cw / .6));
-  const rows = [['Genişlik', `${cm} cm`], ['Yükseklik', '262 cm'], ['Asma dolap', `${Math.round(cw * 100)} × 36 × 42 cm, ${doors} kapak`], ['Gövde', NAMES.body[o.body]], ['Orta panel', NAMES.panel[o.panel]], ['Metal', NAMES.metal[o.metal]], ['Gizli LED', o.led ? 'Var' : 'Yok']];
+  const cm = Math.round(o.width * 100);
+  const rows = [['Genişlik', `${cm} cm`], ['Yükseklik', `${UNIT.H * 100} cm`], ['Asma dolap', `${cm} × ${UNIT.cabH * 100} × ${UNIT.cabD * 100} cm, ${drawerCount(o.width)} çekmece`], ['Gövde', NAMES.body[o.body]], ['Orta panel', NAMES.panel[o.panel]], ['Metal', NAMES.metal[o.metal]], ['Gizli LED', o.led ? 'Var' : 'Yok']];
   spec.innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
   wOut.textContent = `${cm} cm`;
   const msg = ['Merhaba Arkhera, sitenizde tasarladığım TV ünitesi için teklif almak istiyorum.', ...rows.map(([k, v]) => `${k}: ${v}`), 'Ölçüyü keşifte netleştirelim.'].join('\n');
@@ -1031,46 +1028,47 @@ if (hasWebGL2()) {
 function initConfigurator() {
   const canvas = document.getElementById('cfg-canvas'), dimEl = document.getElementById('cfg-dimw');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-  renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = .95;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = .92;
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  const scene = new THREE.Scene(); scene.background = new THREE.Color(0x221b16);
+  const scene = new THREE.Scene(); scene.background = new THREE.Color(0xe6dac7);
   const pmrem = new THREE.PMREMGenerator(renderer);
-  scene.environment = pmrem.fromScene(new RoomEnvironment(), .04).texture; scene.environmentIntensity = .38;
-  const camera = new THREE.PerspectiveCamera(34, 1, .05, 50);
-  const T = makeTextures(), L = makeLibrary(T, null);
-  const LEDMAT = new THREE.MeshBasicMaterial({ color: new THREE.Color(1, .85, .62).multiplyScalar(2), toneMapped: false });
-  const mk = (geo, mat, { cast = true, receive = true } = {}) => { const m = new THREE.Mesh(geo, mat); m.castShadow = cast; m.receiveShadow = receive; return m; };
-  const mkInst = (geo, mat, mx) => { const im = new THREE.InstancedMesh(geo, mat, mx.length); mx.forEach((m, i) => im.setMatrixAt(i, m)); im.castShadow = im.receiveShadow = true; return im; };
-  const led = geo => new THREE.Mesh(geo, LEDMAT);
-  const floorGeo = new THREE.PlaneGeometry(12, 6); floorGeo.rotateX(-Math.PI / 2);
-  const floor = mk(floorGeo, L.floor, { cast: false }); floor.position.z = 2.8; scene.add(floor);
-  const wallMat = L.plaster.clone(); wallMat.color.set(0xc4b7a5);
-  const wall = mk(new THREE.PlaneGeometry(12, 4), wallMat, { cast: false }); wall.position.set(0, 2, 0); scene.add(wall);
-  const key = new THREE.DirectionalLight(0xfff0dc, 1.5); key.position.set(-3, 5, 5); key.castShadow = true; key.shadow.mapSize.set(1024, 1024);
-  Object.assign(key.shadow.camera, { left: -4, right: 4, top: 4, bottom: -1, near: 1, far: 20 }); key.shadow.bias = -.0004; key.shadow.normalBias = .02; key.shadow.radius = 5;
-  scene.add(key);
-  const glow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: T.blob, color: 0xffb46a, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
-  glow.rotation.x = -Math.PI / 2; glow.position.set(0, .004, .3); scene.add(glow);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), .04).texture; scene.environmentIntensity = .32;
+  const camera = new THREE.PerspectiveCamera(34, 1, .05, 60);
+  const T = makeTextures(), L = makeLibrary(T);
+  const LEDMAT = new THREE.MeshBasicMaterial({ color: new THREE.Color(1, .85, .62).multiplyScalar(2.2), toneMapped: false });
+  // the room turns with the unit, so nothing ever sinks into the wall
   const pivot = new THREE.Group(); scene.add(pivot);
-  let unit = null, yaw = -.18, W = 1, H = 1, o = readCfg();
+  const floorGeo = new THREE.PlaneGeometry(16, 10); floorGeo.rotateX(-Math.PI / 2);
+  const floor = new THREE.Mesh(floorGeo, L.floor); floor.position.z = 4.5; floor.receiveShadow = true; pivot.add(floor);
+  const wall = new THREE.Mesh(new THREE.PlaneGeometry(16, 6), L.wall); wall.position.set(0, 3, 0); wall.receiveShadow = true; pivot.add(wall);
+  const glowMat = new THREE.MeshBasicMaterial({ map: T.blob, color: 0xffb768, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
+  const floorGlow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), glowMat); floorGlow.rotation.x = -Math.PI / 2; floorGlow.position.set(0, .004, .34); pivot.add(floorGlow);
+  const wallGlow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), glowMat); wallGlow.position.set(0, .14, .03); pivot.add(wallGlow);
+  // soft daylight from the window side, as in the opening room
+  const key = new THREE.DirectionalLight(0xfff1de, 2); key.position.set(-4, 4.5, 4.5); key.castShadow = true; key.shadow.mapSize.set(1024, 1024);
+  Object.assign(key.shadow.camera, { left: -4, right: 4, top: 4, bottom: -1, near: 1, far: 20 }); key.shadow.bias = -.0004; key.shadow.normalBias = .02; key.shadow.radius = 6;
+  scene.add(key);
+  scene.add(new THREE.HemisphereLight(0xfff8ef, 0xa98a66, .3));
+  let unit = null, yaw = -.22, W = 1, H = 1, o = readCfg();
 
   function rebuild() {
     o = readCfg();
     if (unit) { pivot.remove(unit); unit.traverse(m => m.geometry && m.geometry.dispose()); }
-    unit = buildWallUnit(o, { L, mk, mkInst, led }); pivot.add(unit);
-    glow.visible = o.led; glow.scale.set(o.width, .9, 1);
-    key.intensity = o.led ? 1.15 : 1.5;
+    unit = buildWallUnit(o, L, LEDMAT); pivot.add(unit);
+    floorGlow.visible = wallGlow.visible = o.led;
+    floorGlow.scale.set(o.width * 1.05, .75, 1); wallGlow.scale.set(o.width * 1.05, .34, 1);
     frameCam(); draw();
   }
   function frameCam() {
-    const half = Math.max(o.width / 2 + .45, 1.5);
-    const dist = half / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2) * Math.min(1.25, camera.aspect)) * 1.02;
-    camera.position.set(0, 1.45, Math.max(3.6, dist + .6)); camera.lookAt(0, 1.2, 0); camera.updateProjectionMatrix();
+    const half = o.width / 2 + .5, vh = UNIT.H / 2 + .55;
+    const t = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+    const dist = Math.max(half / (t * camera.aspect), vh / t);
+    camera.position.set(0, 1.45, dist + .3); camera.lookAt(0, 1.3, 0); camera.updateProjectionMatrix();
   }
   const v = new THREE.Vector3();
   function draw() {
-    pivot.rotation.y = yaw; renderer.render(scene, camera);
-    v.set(0, 2.62 + .14, .1).applyMatrix4(pivot.matrixWorld).project(camera);
+    pivot.rotation.y = yaw; pivot.updateMatrixWorld(); renderer.render(scene, camera);
+    v.set(0, UNIT.H + .12, .05).applyMatrix4(pivot.matrixWorld).project(camera);
     dimEl.hidden = false; dimEl.textContent = `← ${Math.round(o.width * 100)} cm →`;
     dimEl.style.left = ((v.x * .5 + .5) * W) + 'px'; dimEl.style.top = ((-v.y * .5 + .5) * H) + 'px';
   }
@@ -1086,12 +1084,12 @@ function initConfigurator() {
     if (sx === null) return;
     const dx = e.clientX - sx, dy = e.clientY - sy;
     if (!decided && Math.hypot(dx, dy) > 8) { decided = true; turning = Math.abs(dx) > Math.abs(dy); }
-    if (turning) { yaw = clamp(sYaw + dx * .006, -.7, .7); draw(); }
+    if (turning) { yaw = clamp(sYaw + dx * .005, -.6, .6); draw(); }
   });
   addEventListener('pointerup', () => { sx = null; });
   addEventListener('pointercancel', () => { sx = null; });
   view.addEventListener('keydown', e => {
-    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); yaw = clamp(yaw + (e.key === 'ArrowLeft' ? -.1 : .1), -.7, .7); draw(); }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); yaw = clamp(yaw + (e.key === 'ArrowLeft' ? -.1 : .1), -.6, .6); draw(); }
   });
   cfgForm.addEventListener('input', rebuild);
   addEventListener('resize', resize);

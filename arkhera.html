@@ -35,7 +35,6 @@ html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--ink);color:var(--bone);font:400 1rem/1.6 var(--f-body);-webkit-font-smoothing:antialiased;overflow-x:clip}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--ink)}
 img{max-width:100%;display:block}
-[hidden]{display:none!important}
 a{color:inherit}
 :focus-visible{outline:2px solid var(--brass);outline-offset:3px}
 .wrap{padding-left:max(var(--gut),env(safe-area-inset-left,0px));padding-right:max(var(--gut),env(safe-area-inset-right,0px))}
@@ -249,34 +248,23 @@ em{font-style:italic}
 .cfg-head{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:24px;margin-bottom:clamp(36px,6vh,64px)}
 .cfg-head h2{grid-column:1/span 7;font-size:clamp(2.5rem,4.8vw,4.8rem);line-height:.98}
 .cfg-head p{grid-column:9/span 4;margin:0;align-self:end;color:var(--bone-dim)}
-.cfg-body{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);grid-template-rows:auto 1fr;grid-template-areas:"stage form" "board form";gap:clamp(20px,3vw,48px) clamp(24px,3vw,48px);align-items:start}
-.cfg-body>.cfg-stage{grid-area:stage}
-.cfg-form{grid-area:form}
-.cfg-body>.board{grid-area:board}
-.cfg-stage{display:grid;gap:14px;min-width:0}
-.cfg-tabs{display:flex;gap:8px}
-.cfg-tabs button{min-height:40px;padding:0 16px;border:1px solid var(--line);border-radius:999px;background:none;color:var(--bone-dim);font:500 .7rem/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:border-color .2s,color .2s,background .2s}
-.cfg-tabs button[aria-selected="true"]{border-color:var(--brass);color:var(--bone);background:rgba(201,161,101,.12)}
-/* the drawing sits on a sheet of warm paper, like a presentation board */
-.cfg-view{position:relative;margin:0;aspect-ratio:640/372;max-width:100%;background:#efe7da;border-radius:2px;overflow:hidden}
-.cfg-view svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.cfg-body{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:clamp(24px,3vw,48px);align-items:start}
+.cfg-view{position:relative;aspect-ratio:4/3;max-width:100%;margin:0;background:#211a15;border-radius:2px;overflow:hidden}
+.cfg-view img,.cfg-view canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.cfg-view canvas{opacity:0}
+.cfg-view.live canvas{opacity:1}
+.cfg-view.live img{visibility:hidden}
+/* the next state wipes in from the right behind a brass line, as in the opener */
 .cfg-view .next{clip-path:inset(0 0 0 100%)}
-.cfg-view .next.go{clip-path:inset(0 0 0 0);transition:clip-path .75s cubic-bezier(.65,0,.35,1)}
-.cfg-view .seam{position:absolute;top:0;bottom:0;left:100%;width:2px;margin-left:-1px;background:#c9a065;box-shadow:0 0 12px 2px rgba(201,161,101,.6);opacity:0;pointer-events:none}
-.cfg-view .seam.go{left:0;opacity:1;transition:left .75s cubic-bezier(.65,0,.35,1)}
-.cfg-cap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 16px;margin:0;font:500 .66rem/1.4 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--bone-dim)}
-.cfg-photo{position:relative;margin:0;aspect-ratio:4/3;max-width:100%;overflow:hidden;border-radius:2px;background:#211a15}
-.cfg-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.cfg-photo figcaption{position:absolute;left:12px;right:12px;bottom:12px;width:fit-content;max-width:calc(100% - 24px);font:500 .66rem/1.4 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--bone);background:rgba(20,16,13,.74);padding:7px 10px;border-radius:2px}
-/* material board: one sample per choice */
-.board{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-.board li{display:grid;gap:8px;min-width:0}
-.board .sw{aspect-ratio:1/1;border-radius:2px;background-size:cover;background-position:center;box-shadow:inset 0 0 0 1px rgba(241,235,226,.14)}
-.board .sw.swap{animation:swap .5s cubic-bezier(.2,.7,.2,1)}
-@keyframes swap{from{opacity:.15;transform:scale(.92)}to{opacity:1;transform:none}}
-.board b{font:500 .64rem/1.2 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--brass)}
-.board span.v{font-size:.86rem;line-height:1.25;color:var(--bone)}
-@media (prefers-reduced-motion:reduce){.cfg-view .next.go,.cfg-view .seam.go{transition:none}.board .sw.swap{animation:none}}
+.cfg-view .next.go{clip-path:inset(0 0 0 0);transition:clip-path .8s cubic-bezier(.65,0,.35,1)}
+.cfg-view .seam{position:absolute;top:0;bottom:0;left:100%;width:2px;margin-left:-1px;background:#e9c88f;box-shadow:0 0 14px 3px rgba(233,200,143,.55);opacity:0;pointer-events:none}
+.cfg-view .seam.go{left:0;opacity:1;transition:left .8s cubic-bezier(.65,0,.35,1)}
+.cfg-view .dim{position:absolute;left:13.3%;right:4%;top:1.6%;display:flex;align-items:center;gap:10px;font:500 .72rem/1 var(--f-mono);letter-spacing:.06em;color:var(--brass);pointer-events:none}
+.cfg-view .dim::before,.cfg-view .dim::after{content:"";flex:1;height:1px;background:currentColor}
+.cfg-view .dim span{padding:5px 8px;background:rgba(20,16,13,.78);border-radius:2px;transition:transform .3s}
+.cfg-view .dim span.bump{transform:scale(1.12)}
+.cfg-view figcaption{position:absolute;left:14px;bottom:12px;font:500 .66rem/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--bone);background:rgba(20,16,13,.7);padding:7px 10px;border-radius:2px}
+@media (prefers-reduced-motion:reduce){.cfg-view .next.go,.cfg-view .seam.go,.cfg-view .dim span{transition:none}}
 .cfg-form{display:grid;gap:22px}
 .cfg-form fieldset{border:0;margin:0;padding:0;min-width:0}
 .cfg-form legend,.cfg-form .lbl{display:flex;justify-content:space-between;width:100%;font:500 .7rem/1.3 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--brass);margin-bottom:10px;padding:0}
@@ -295,10 +283,7 @@ input[type=range]{width:100%;accent-color:var(--brass);min-height:32px}
 .cfg-form .small{margin:0;font-size:.82rem;color:var(--bone-dim)}
 @media (max-width:900px){
   .cfg-head h2,.cfg-head p{grid-column:1/-1}
-  .cfg-body{grid-template-columns:1fr;grid-template-rows:none;grid-template-areas:"stage" "form" "board"}
-  /* phones and tablets: the drawing stays in view while the options below it change */
-  .cfg-body>.cfg-stage{position:sticky;top:calc(var(--head) + env(safe-area-inset-top,0px));z-index:3;background:var(--ink);padding-block:10px 12px;border-bottom:1px solid var(--line)}
-  .cfg-body>.cfg-stage .cfg-cap{display:none}
+  .cfg-body{grid-template-columns:1fr}
 }
 
 /* ---------- contact ---------- */
@@ -556,27 +541,17 @@ input[type=range]{width:100%;accent-color:var(--brass);min-height:32px}
         <p class="eyebrow">Ünite tasarla</p>
         <h2 id="cfg-h">Duvarınızın ölçüsüyle, sizin seçtiğiniz malzemeyle.</h2>
       </div>
-      <p>Açılıştaki salonun TV ünitesi, ölçekli ön görünüş olarak. Genişliği ve malzemeleri değiştirin, çizim ve malzeme panosu seçiminizi gösterir; sonucu teklif için bize gönderin. Kesin ölçüyü keşifte alırız.</p>
+      <p>Açılıştaki salonun TV ünitesi. Genişliği ve malzemeleri değiştirin, sonucu teklif için bize gönderin. Ölçüler ön fikir içindir; kesin ölçüyü keşifte alırız.</p>
     </div>
     <div class="cfg-body">
-      <div class="cfg-stage">
-        <div class="cfg-tabs" role="tablist" aria-label="Görünüm">
-          <button type="button" role="tab" id="tab-draw" aria-selected="true" aria-controls="cfg-draw">Proje çizimi</button>
-          <button type="button" role="tab" id="tab-photo" aria-selected="false" aria-controls="cfg-photo" tabindex="-1">Örnek uygulama</button>
-        </div>
-        <div id="cfg-draw" role="tabpanel" aria-labelledby="tab-draw" class="cfg-stage">
-          <figure class="cfg-view">
-            <svg class="now" viewBox="0 0 640 372" role="img" aria-labelledby="cfg-cap"></svg>
-            <svg class="next" viewBox="0 0 640 372" aria-hidden="true"></svg>
-            <i class="seam"></i>
-          </figure>
-          <p class="cfg-cap"><span id="cfg-cap">Ön görünüş</span><span>Ölçüler cm · ön fikir içindir</span></p>
-        </div>
-        <figure id="cfg-photo" role="tabpanel" aria-labelledby="tab-photo" class="cfg-photo" hidden>
-          <img src="img/tasarla.webp" width="1200" height="900" loading="lazy" alt="Ceviz çıtalı, pirinç çerçeveli Calacatta mermer panelli TV duvarı ve altı LED aydınlatmalı asma ceviz dolap">
-          <figcaption>Örnek uygulama: ceviz, Calacatta mermer, pirinç, LED açık</figcaption>
-        </figure>
-      </div>
+      <figure class="cfg-view">
+        <img src="img/tasarla.webp" width="1200" height="900" loading="lazy" alt="Ceviz çıtalı, pirinç çerçeveli Calacatta mermer panelli TV duvarı ve altı LED aydınlatmalı asma ceviz dolap">
+        <canvas class="now" width="1200" height="900" aria-hidden="true"></canvas>
+        <canvas class="next" width="1200" height="900" aria-hidden="true"></canvas>
+        <i class="seam"></i>
+        <div class="dim" aria-hidden="true"><span id="cfg-dim">360 cm</span></div>
+        <figcaption id="cfg-cap" aria-live="polite">Ceviz · Calacatta mermer · Pirinç · LED açık</figcaption>
+      </figure>
       <form class="cfg-form" id="cfg-form">
         <div>
           <label class="lbl" for="cfg-w"><span>Genişlik</span><output id="cfg-w-out">360 cm</output></label>
@@ -617,12 +592,6 @@ input[type=range]{width:100%;accent-color:var(--brass);min-height:32px}
         <a class="btn btn--solid" id="cfg-send" href="https://wa.me/905557524719" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#i-wa"/></svg>Bu ünite için teklif al</a>
         <p class="small">WhatsApp’ta seçimlerinizi içeren bir mesaj açılır; göndermeden önce düzenleyebilirsiniz.</p>
       </form>
-      <ul class="board" aria-label="Seçilen malzemeler">
-        <li><span class="sw" data-k="body"></span><b>Gövde</b><span class="v" data-v="body"></span></li>
-        <li><span class="sw" data-k="panel"></span><b>Orta panel</b><span class="v" data-v="panel"></span></li>
-        <li><span class="sw" data-k="metal"></span><b>Metal</b><span class="v" data-v="metal"></span></li>
-        <li><span class="sw" data-k="led"></span><b>Işık</b><span class="v" data-v="led"></span></li>
-      </ul>
     </div>
   </section>
 
@@ -855,171 +824,166 @@ document.documentElement.classList.add('js');
 </script>
 
 <script>
-// Ünite tasarla: a scaled front elevation (1 unit = 1 cm) and a material board, drawn from the options;
-// the summary and the WhatsApp message follow the same options
+// Ünite tasarla: the options write the summary and the WhatsApp message
 (() => {
-  const UNIT = { H: 270, panelH: 245, cabH: 32, cabD: 42, cabY: 22 };
+  const UNIT = { H: 270, cabH: 32, cabD: 42 };
   const drawerCount = cm => Math.max(3, Math.round(cm / 60));
-  const form = document.getElementById('cfg-form');
-  const wOut = document.getElementById('cfg-w-out'), spec = document.getElementById('cfg-spec'), send = document.getElementById('cfg-send');
+  const cfgForm = document.getElementById('cfg-form');
+  const wOut = document.getElementById('cfg-w-out'), spec = document.getElementById('cfg-spec'), cfgSend = document.getElementById('cfg-send');
   const NAMES = { body: { ceviz: 'Ceviz', mese: 'Meşe', antrasit: 'Antrasit lake', krem: 'Krem lake' }, panel: { mermer: 'Calacatta mermer', traverten: 'Traverten', cita: 'Ahşap çıta' }, metal: { pirinc: 'Pirinç', siyah: 'Siyah' } };
-  const read = () => { const f = new FormData(form); return { w: +f.get('w'), body: f.get('body'), panel: f.get('panel'), metal: f.get('metal'), led: f.get('led') === '1' }; };
-
-  function describe(o) {
-    const rows = [['Genişlik', `${o.w} cm`], ['Yükseklik', `${UNIT.H} cm`], ['Asma dolap', `${o.w} × ${UNIT.cabH} × ${UNIT.cabD} cm, ${drawerCount(o.w)} çekmece`], ['Gövde', NAMES.body[o.body]], ['Orta panel', NAMES.panel[o.panel]], ['Metal', NAMES.metal[o.metal]], ['Gizli LED', o.led ? 'Var' : 'Yok']];
+  function describe() {
+    const f = new FormData(cfgForm), cm = +f.get('w');
+    const rows = [['Genişlik', `${cm} cm`], ['Yükseklik', `${UNIT.H} cm`], ['Asma dolap', `${cm} × ${UNIT.cabH} × ${UNIT.cabD} cm, ${drawerCount(cm)} çekmece`], ['Gövde', NAMES.body[f.get('body')]], ['Orta panel', NAMES.panel[f.get('panel')]], ['Metal', NAMES.metal[f.get('metal')]], ['Gizli LED', f.get('led') === '1' ? 'Var' : 'Yok']];
     spec.innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
-    wOut.textContent = `${o.w} cm`;
+    wOut.textContent = `${cm} cm`;
     const msg = ['Merhaba Arkhera, sitenizde tasarladığım TV ünitesi için teklif almak istiyorum.', ...rows.map(([k, v]) => `${k}: ${v}`), 'Ölçüyü keşifte netleştirelim.'].join('\n');
-    send.href = `https://wa.me/905557524719?text=${encodeURIComponent(msg)}`;
+    cfgSend.href = `https://wa.me/905557524719?text=${encodeURIComponent(msg)}`;
   }
+  cfgForm.addEventListener('input', describe);
+  cfgForm.addEventListener('submit', e => e.preventDefault());
+  describe();
 
-  // materials: real samples for wood and stone (tools/materials.py), flat paint for lacquer
-  // back: the backer between the slats and behind the drawer fronts, a shade darker than the finish
-  const WOOD = { ceviz: { img: 'img/mat/ceviz.webp', back: '#1d1712' }, mese: { img: 'img/mat/mese.webp', back: '#3a2a1b' }, antrasit: { top: '#4a4744', bot: '#2c2a28', back: '#141312' }, krem: { top: '#f4eee5', bot: '#ddd3c4', back: '#a99d8b' } };
-  const STONE = { mermer: { img: 'img/mat/mermer.webp', w: 168, h: 60 }, traverten: { img: 'img/mat/traverten.webp', w: 96, h: 96 } };
-  const METAL = { pirinc: '#c39a5c', siyah: '#1b1a19' };
-  const INK = '#2b221c', PAPER = '#efe7da', WALL = '#e8dfd1';
-
-  // the elevation; p keeps pattern ids apart between the two drawings, s is screen px per cm (text stays legible)
-  function drawing(o, W, p, s) {
-    const { H, panelH, cabH, cabY } = UNIT, floor = 330, top = floor - H, x0 = 320 - W / 2, x1 = 320 + W / 2;
-    const stone = o.panel !== 'cita', lw = W * .13, pw = stone ? W * .55 : 0, px0 = x0 + lw, px1 = px0 + pw;
-    const wood = WOOD[o.body], fv = wood.img ? `url(#${p}w)` : `url(#${p}lq)`, fh = wood.img ? `url(#${p}wh)` : `url(#${p}lq)`;
-    const fs = Math.max(8.5, 10.5 / s), f = n => n.toFixed(2);
-    let d = '<defs>';
-    if (wood.img) d += `<pattern id="${p}w" patternUnits="userSpaceOnUse" width="60" height="60"><image href="${wood.img}" width="60" height="60" preserveAspectRatio="none"/></pattern>`
-      + `<pattern id="${p}wh" patternUnits="userSpaceOnUse" width="60" height="60" patternTransform="rotate(90)"><image href="${wood.img}" width="60" height="60" preserveAspectRatio="none"/></pattern>`;
-    else d += `<linearGradient id="${p}lq" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${wood.top}"/><stop offset="1" stop-color="${wood.bot}"/></linearGradient>`;
-    if (stone) { const st = STONE[o.panel]; d += `<pattern id="${p}st" patternUnits="userSpaceOnUse" x="${f(px0)}" y="${floor - panelH}" width="${st.w}" height="${st.h}"><image href="${st.img}" width="${st.w}" height="${st.h}" preserveAspectRatio="none"/></pattern>`; }
-    d += `<linearGradient id="${p}tv" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#30343b"/><stop offset=".42" stop-color="#121317"/><stop offset="1" stop-color="#07080a"/></linearGradient>`
-      + `<linearGradient id="${p}led" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffc77e" stop-opacity=".95"/><stop offset="1" stop-color="#ffc77e" stop-opacity=".05"/></linearGradient>`
-      + `<radialGradient id="${p}fl" cx=".5" cy="0" r=".7"><stop offset="0" stop-color="#ffc77e" stop-opacity=".75"/><stop offset="1" stop-color="#ffc77e" stop-opacity="0"/></radialGradient>`
-      + `<pattern id="${p}h" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="#b7a88f" stroke-width="1"/></pattern></defs>`;
-    let g = `<rect width="640" height="372" fill="${PAPER}"/><rect y="22" width="640" height="${floor - 22}" fill="${WALL}"/>`
-      + `<line x1="0" y1="22" x2="640" y2="22" stroke="${INK}" stroke-width="1"/>`
-      + `<rect y="${floor}" width="640" height="24" fill="url(#${p}h)"/><line x1="0" y1="${floor}" x2="640" y2="${floor}" stroke="${INK}" stroke-width="1.6"/>`;
-    // slat columns: slats with a lit edge, on a dark backer
-    const slats = (a, b) => {
-      let s = `<rect x="${f(a)}" y="${top}" width="${f(b - a)}" height="${H}" fill="${wood.back}"/>`;
-      const pitch = 5.5, sw = 3.4, n = Math.floor((b - a) / pitch), pad = (b - a - n * pitch) / 2;
-      for (let i = 0; i < n; i++) { const x = a + pad + i * pitch + (pitch - sw) / 2; s += `<rect x="${f(x)}" y="${top}" width="${sw}" height="${H}" fill="${fv}"/><rect x="${f(x)}" y="${top}" width=".8" height="${H}" fill="#fff" opacity=".13"/>`; }
-      return s + `<rect x="${f(a)}" y="${top}" width="${f(b - a)}" height="${H}" fill="none" stroke="${INK}" stroke-width=".5"/>`;
-    };
-    g += stone ? slats(x0, px0) + slats(px1, x1) : slats(x0, x1);
-    const cTop = floor - cabY - cabH;
-    if (stone) {
-      const pt = floor - panelH, ins = Math.min(14, pw * .07);
-      g += `<rect x="${f(px0)}" y="${pt}" width="${f(pw)}" height="${panelH}" fill="url(#${p}st)" stroke="${INK}" stroke-width=".5"/>`
-        + `<rect x="${f(px0 + ins)}" y="${f(pt + ins)}" width="${f(pw - 2 * ins)}" height="${f(cTop - 6 - pt - ins)}" fill="none" stroke="${METAL[o.metal]}" stroke-width="1.2"/>`;
-    }
-    const tvW = Math.min(165, (stone ? pw : W * .5) * .66), tvH = tvW * .5625, tvX = (stone ? px0 + pw / 2 : 320) - tvW / 2, tvY = floor - 142 - tvH / 2;
-    g += `<rect x="${f(tvX)}" y="${f(tvY)}" width="${f(tvW)}" height="${f(tvH)}" fill="url(#${p}tv)" stroke="#050506" stroke-width="1.2"/>`;
-    // floating cabinet: top, drawer fronts with shadow gaps, LED under it
-    const n = drawerCount(W), gap = .8, fw = (W - gap * (n + 1)) / n;
-    if (o.led) g += `<rect x="${f(x0)}" y="${cTop + cabH}" width="${f(W)}" height="${cabY}" fill="url(#${p}led)"/><ellipse cx="320" cy="${floor}" rx="${f(W * .56)}" ry="15" fill="url(#${p}fl)"/>`;
-    g += `<rect x="${f(x0)}" y="${cTop}" width="${f(W)}" height="${cabH}" fill="${wood.back}"/>`;
-    for (let i = 0; i < n; i++) g += `<rect x="${f(x0 + gap + i * (fw + gap))}" y="${cTop + 2.8}" width="${f(fw)}" height="${cabH - 3.6}" fill="${fh}"/>`;
-    g += `<rect x="${f(x0)}" y="${cTop}" width="${f(W)}" height="2.8" fill="${fh}"/><rect x="${f(x0)}" y="${cTop}" width="${f(W)}" height="${cabH}" fill="none" stroke="${INK}" stroke-width=".6"/>`;
-    if (o.led) g += `<line x1="${f(x0 + 3)}" y1="${cTop + cabH + .7}" x2="${f(x1 - 3)}" y2="${cTop + cabH + .7}" stroke="#fff3dc" stroke-width="1.3"/>`;
-    // the room's objects: ring vase and small vase, plant on books
-    const vx = px0 - lw * .1 + 6, rx = x1 - Math.min(28, W * .085);
-    g += `<circle cx="${f(vx)}" cy="${cTop - 9}" r="6.6" fill="none" stroke="#ebe5da" stroke-width="4.6"/><circle cx="${f(vx)}" cy="${cTop - 9}" r="8.9" fill="none" stroke="${INK}" stroke-width=".35"/><circle cx="${f(vx)}" cy="${cTop - 9}" r="4.3" fill="none" stroke="${INK}" stroke-width=".35"/>`
-      + `<circle cx="${f(vx + 14)}" cy="${cTop - 4}" r="4" fill="#ebe5da" stroke="${INK}" stroke-width=".35"/>`
-      + `<rect x="${f(rx - 12)}" y="${cTop - 5}" width="24" height="2.5" fill="#efe9df" stroke="${INK}" stroke-width=".3"/><rect x="${f(rx - 11)}" y="${cTop - 2.5}" width="22" height="2.5" fill="#d9d1c4" stroke="${INK}" stroke-width=".3"/>`
-      + `<path d="M${f(rx - 7)} ${cTop - 5} l1.6 -11 h10.8 l1.6 11 z" fill="#f3efe9" stroke="${INK}" stroke-width=".35"/>`
-      + `<g fill="#5a7442" stroke="#33442a" stroke-width=".3">${[[-8, -21, -30, 7], [0, -25, 10, 7.5], [8, -21, 28, 7], [-3, -18, -60, 5], [4, -18, 60, 5]].map(([dx, dy, r, l]) => `<ellipse cx="${f(rx + dx)}" cy="${cTop + dy}" rx="${l}" ry="3" transform="rotate(${r} ${f(rx + dx)} ${cTop + dy})"/>`).join('')}</g>`;
-    // dimensions, drawn the way an elevation is: ticks at the ends, figures in cm
-    const tick = (x, y) => `<line x1="${f(x - 3)}" y1="${f(y + 3)}" x2="${f(x + 3)}" y2="${f(y - 3)}" stroke="${INK}" stroke-width=".9"/>`;
-    const lab = (x, y, t, rot) => { const w = t.length * fs * .62 + 8; return `<g${rot ? ` transform="rotate(-90 ${f(x)} ${f(y)})"` : ''}><rect x="${f(x - w / 2)}" y="${f(y - fs * .75)}" width="${f(w)}" height="${f(fs * 1.5)}" fill="${WALL}"/><text x="${f(x)}" y="${f(y + fs * .36)}" text-anchor="middle" font-size="${f(fs)}" font-family="IBM Plex Mono, ui-monospace, monospace" fill="${INK}">${t}</text></g>`; };
-    const dy = top - 16, hx = x1 + 16;
-    g += `<g stroke="${INK}" stroke-width=".5"><line x1="${f(x0)}" y1="${top - 3}" x2="${f(x0)}" y2="${dy - 4}"/><line x1="${f(x1)}" y1="${top - 3}" x2="${f(x1)}" y2="${dy - 4}"/><line x1="${f(x0 - 4)}" y1="${dy}" x2="${f(x1 + 4)}" y2="${dy}"/>`
-      + `<line x1="${f(x1 + 3)}" y1="${top}" x2="${f(hx + 4)}" y2="${top}"/><line x1="${f(hx)}" y1="${top - 4}" x2="${f(hx)}" y2="${floor}"/></g>`
-      + tick(x0, dy) + tick(x1, dy) + tick(hx, top) + tick(hx, floor)
-      + lab(320, dy, `${Math.round(W)}`) + lab(hx, (top + floor) / 2, `${H}`, true);
-    if (o.led) g += `<text x="${f(x1)}" y="${floor + 17}" text-anchor="end" font-size="${f(fs * .85)}" font-family="IBM Plex Mono, ui-monospace, monospace" fill="#8a5a1e">LED · 3000 K</text>`;
-    return d + g;
-  }
-
-  // board samples
-  const SW = {
-    body: o => WOOD[o.body].img ? `center/cover url(${WOOD[o.body].img})` : `linear-gradient(160deg,${WOOD[o.body].top},${WOOD[o.body].bot})`,
-    panel: o => o.panel === 'cita'
-      ? `repeating-linear-gradient(90deg,transparent 0 10px,${WOOD[o.body].back} 10px 14px),${WOOD[o.body].img ? `center/cover url(${WOOD[o.body].img})` : `linear-gradient(160deg,${WOOD[o.body].top},${WOOD[o.body].bot})`}`
-      : `center/cover url(${STONE[o.panel].img})`,
-    metal: o => o.metal === 'pirinc' ? 'linear-gradient(135deg,#7d5f33,#e9cd96 42%,#a27a43 58%,#f1dcae 78%,#8a6a3a)' : 'linear-gradient(135deg,#0c0b0a,#3d3b38 46%,#151413 62%,#2c2a28)',
-    led: o => o.led ? 'radial-gradient(120% 70% at 50% 0%,#ffe2b0 0,#f2a85a 18%,rgba(140,80,30,.55) 45%,#1d1712 80%)' : 'linear-gradient(#26201b,#1a1612)',
-  };
-  const VAL = { body: o => NAMES.body[o.body], panel: o => NAMES.panel[o.panel], metal: o => NAMES.metal[o.metal], led: o => o.led ? 'Gizli LED · 3000 K' : 'LED yok' };
-
-  const view = document.querySelector('.cfg-view'), now = view.querySelector('.now'), next = view.querySelector('.next'), seam = view.querySelector('.seam');
-  const cap = document.getElementById('cfg-cap');
+  // the photo, recoloured for the chosen options with masks for wood, stone, frame and LED light (tools/masks.py)
+  const view = document.querySelector('.cfg-view'), now = view.querySelector('.now'), next = view.querySelector('.next');
+  const seam = view.querySelector('.seam'), dim = document.getElementById('cfg-dim'), cap = document.getElementById('cfg-cap');
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const scale = () => (view.clientWidth || 640) / 640;
-  let shown = read(), W = shown.w, tween = 0, wipe = null;
+  // Each finish is an albedo swap: a pixel's light (its brightness over the surface's own average) is kept,
+  // only the surface colour changes, so shadows stay shadows and highlights stay highlights.
+  const TARGET = { mese: [198, 150, 100], krem: [222, 214, 200], antrasit: [66, 64, 62] }; // the finish where walnut was average
+  const BLACK = [34, 32, 30];
+  const N = 1200 * 900;
+  const SLAT_X = 868, SLAT_P = 56; // a run of real slats in the right column, clear of the plant, copied across the panel
+  let src = null, mask = null, glow = null, trav = null, lum = null, flat = null, stoneLight = null, colLight = null;
+  let woodAvg = .3, stoneAvg = .85, shown = '', busy = null;
+  const pixels = (url, w = 1200, h = 900) => new Promise((ok, fail) => {
+    const im = new Image();
+    im.onload = () => { const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d'); x.drawImage(im, 0, 0, w, h); ok(x.getImageData(0, 0, w, h).data); };
+    im.onerror = fail; im.src = url;
+  });
+  const options = () => { const f = new FormData(cfgForm); return { body: f.get('body'), panel: f.get('panel'), metal: f.get('metal'), led: f.get('led') === '1' }; };
 
-  function board(o, changed) {
-    for (const k of ['body', 'panel', 'metal', 'led']) {
-      const sw = document.querySelector(`.board .sw[data-k="${k}"]`);
-      sw.style.background = SW[k](o);
-      document.querySelector(`.board [data-v="${k}"]`).textContent = VAL[k](o);
-      if (changed.includes(k) || (k === 'panel' && changed.includes('body') && o.panel === 'cita')) { sw.classList.remove('swap'); void sw.offsetWidth; sw.classList.add('swap'); }
-    }
-    cap.textContent = `Ön görünüş · ${NAMES.body[o.body]}, ${{ mermer: 'Calacatta mermer', traverten: 'traverten', cita: 'ahşap çıta' }[o.panel]}, ${NAMES.metal[o.metal].toLocaleLowerCase('tr')} metal, LED ${o.led ? 'açık' : 'kapalı'}`;
-  }
-  function paint() { now.innerHTML = drawing(shown, W, 'n', scale()); }
-
-  function update() {
-    const o = read();
-    describe(o);
-    const changed = ['body', 'panel', 'metal', 'led'].filter(k => o[k] !== shown[k]);
-    board(o, changed);
-    if (photoTab.getAttribute('aria-selected') === 'true') select(drawTab);
-    if (changed.length) {
-      if (wipe) wipe();
-      shown = { ...o, w: shown.w };
-      if (reduce) paint();
-      else {
-        next.innerHTML = drawing(shown, W, 'x', scale());
-        next.classList.remove('go'); seam.classList.remove('go'); void next.offsetWidth;
-        next.classList.add('go'); seam.classList.add('go');
-        const done = () => { wipe = null; paint(); next.classList.remove('go'); seam.classList.remove('go'); };
-        const t = setTimeout(done, 800);
-        wipe = () => { clearTimeout(t); done(); };
+  // box blur of v weighted by m (so the TV, frame and surroundings do not bleed in), radius rx × ry
+  function maskedBlur(v, m, rx, ry) {
+    const a = new Float32Array(N), b = new Float32Array(N), ta = new Float32Array(N), tb = new Float32Array(N);
+    for (let p = 0; p < N; p++) { a[p] = v[p] * m[p]; b[p] = m[p]; }
+    for (let y = 0; y < 900; y++) {
+      let sa = 0, sb = 0; const o = y * 1200;
+      for (let x = -rx; x < 1200; x++) {
+        if (x + rx < 1200) { sa += a[o + x + rx]; sb += b[o + x + rx]; }
+        if (x - rx - 1 >= 0) { sa -= a[o + x - rx - 1]; sb -= b[o + x - rx - 1]; }
+        if (x >= 0) { ta[o + x] = sa; tb[o + x] = sb; }
       }
     }
-    if (o.w !== shown.w) {
-      shown.w = o.w;
-      if (reduce) { W = o.w; paint(); return; }
-      // ease the unit to its new width
-      const from = W, to = o.w, t0 = performance.now();
-      cancelAnimationFrame(tween);
-      const step = now_ => {
-        const k = Math.min(1, (now_ - t0) / 420), e = 1 - Math.pow(1 - k, 3);
-        W = from + (to - from) * e; paint();
-        if (k < 1) tween = requestAnimationFrame(step);
-      };
-      tween = requestAnimationFrame(step);
+    const out = new Float32Array(N);
+    for (let x = 0; x < 1200; x++) {
+      let sa = 0, sb = 0;
+      for (let y = -ry; y < 900; y++) {
+        if (y + ry < 900) { sa += ta[(y + ry) * 1200 + x]; sb += tb[(y + ry) * 1200 + x]; }
+        if (y - ry - 1 >= 0) { sa -= ta[(y - ry - 1) * 1200 + x]; sb -= tb[(y - ry - 1) * 1200 + x]; }
+        if (y >= 0) out[y * 1200 + x] = sb > 1e-3 ? sa / sb : 0;
+      }
     }
+    return out;
   }
 
-  // tabs: the drawing follows the options; the photo shows the built room
-  const drawTab = document.getElementById('tab-draw'), photoTab = document.getElementById('tab-photo');
-  const drawPanel = document.getElementById('cfg-draw'), photoPanel = document.getElementById('cfg-photo');
-  function select(tab) {
-    const draw = tab === drawTab;
-    drawTab.setAttribute('aria-selected', draw); photoTab.setAttribute('aria-selected', !draw);
-    drawTab.tabIndex = draw ? 0 : -1; photoTab.tabIndex = draw ? -1 : 0;
-    drawPanel.hidden = !draw; photoPanel.hidden = draw;
-    if (draw) paint();
-  }
-  for (const t of [drawTab, photoTab]) {
-    t.addEventListener('click', () => select(t));
-    t.addEventListener('keydown', e => { if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); const o = t === drawTab ? photoTab : drawTab; select(o); o.focus(); } });
+  function prepare(a, m, g, t) {
+    src = a; mask = m; glow = g; trav = t;
+    lum = new Float32Array(N);
+    for (let p = 0, i = 0; p < N; p++, i += 4) lum[p] = (.299 * a[i] + .587 * a[i + 1] + .114 * a[i + 2]) / 255;
+    // average walnut and marble, measured on solid, unlit-by-LED pixels
+    let sw = 0, nw = 0, ss = 0, ns = 0;
+    for (let p = 0, i = 0; p < N; p++, i += 4) {
+      if (m[i] > 240 && g[i] < 20) { sw += lum[p]; nw++; }
+      if (m[i + 1] > 240) { ss += lum[p]; ns++; }
+    }
+    woodAvg = sw / nw; stoneAvg = ss / ns;
+    // lacquer: the wood's light without its fine grain
+    const wm = new Float32Array(N), sm = new Float32Array(N);
+    for (let p = 0, i = 0; p < N; p++, i += 4) { wm[p] = m[i] / 255; sm[p] = m[i + 1] / 255; }
+    flat = maskedBlur(lum, wm, 6, 6); // the wood's light, smooth: grain, gaps and slats averaged out
+    // the light on the panel without the marble's veins
+    stoneLight = maskedBlur(lum, sm, 18, 18);
+    // the slat column's light per row, to lift its real slats onto the panel
+    colLight = new Float32Array(900);
+    for (let y = 0; y < 900; y++) { let s = 0; for (let x = SLAT_X; x < SLAT_X + SLAT_P; x++) s += lum[y * 1200 + x]; colLight[y] = s / SLAT_P; }
   }
 
-  form.addEventListener('input', update);
-  form.addEventListener('submit', e => e.preventDefault());
-  addEventListener('resize', paint);
-  describe(shown); board(shown, []); paint();
+  function render(o) {
+    const out = new ImageData(1200, 900), d = out.data, T = TARGET[o.body], cita = o.panel === 'cita';
+    for (let i = 0, p = 0; p < N; p++, i += 4) {
+      let r = src[i], g = src[i + 1], b = src[i + 2];
+      const x = p % 1200, y = (p / 1200) | 0, wm = mask[i] / 255, mm = mask[i + 2] / 255, gl = glow[i] / 255;
+      // a new panel covers the whole face, frame lines and stone edges included; the frame is drawn back on top below
+      const sm = o.panel !== 'mermer' ? glow[i + 1] / 255 : 0;
+      let wood = wm, panelLight = 1; // how much of this pixel is wood after the panel is decided, and its light
+      if (sm > 0 && o.panel !== 'mermer') {
+        const light = panelLight = stoneLight[p] / stoneAvg; // 1 where the marble was average
+        let cr, cg, cb;
+        if (cita) { // a real slat from the right column, relit to this spot on the panel
+          const q = (y * 1200 + SLAT_X + ((x - 301) % SLAT_P + SLAT_P) % SLAT_P) * 4, k = light / Math.max(.05, colLight[y] / woodAvg);
+          cr = src[q] * k; cg = src[q + 1] * k; cb = src[q + 2] * k;
+        } else { // travertine, lit as the marble was
+          const q = ((y % 768) * 768 + (x % 768)) * 4, k = light * .97;
+          cr = trav[q] * k; cg = trav[q + 1] * k; cb = trav[q + 2] * k;
+        }
+        r += (cr - r) * sm; g += (cg - g) * sm; b += (cb - b) * sm;
+        if (cita) wood = Math.max(wood, sm);
+      }
+      if (wood > 0 && T) {
+        const L = (.299 * r + .587 * g + .114 * b) / 255;
+        // f: the pixel's brightness over average walnut. Oak keeps all of it (light, shadow and grain).
+        // Lacquer keeps the light and shadow (sh) but only a little of the grain and gap contrast on top of it.
+        let f = L / woodAvg;
+        if (o.body !== 'mese') {
+          const sh = wm > 0 ? flat[p] / woodAvg : panelLight;
+          // against the smooth light, gaps and shadows are clearly darker and stay as they are;
+          // the grain only ripples around it, and paint flattens that out
+          const v = f / Math.max(.02, sh), flatV = Math.pow(v, .1);
+          f = sh * (v < .55 ? v : v > .75 ? flatV : v + (flatV - v) * (v - .55) / .2);
+          if (f > .9) f = .9 + (f - .9) / (1 + 1.4 * (f - .9)); // pale paint does not burn out in the window or LED light
+        }
+        r += (T[0] * f - r) * wood; g += (T[1] * f - g) * wood; b += (T[2] * f - b) * wood;
+      }
+      if (mm > 0 && !cita) { // the frame: black, or the photo's own brass back over a new panel
+        const f = Math.min(1.6, lum[p] / .6);
+        const c = o.metal === 'siyah' ? [BLACK[0] * f, BLACK[1] * f, BLACK[2] * f] : [src[i], src[i + 1], src[i + 2]];
+        r += (c[0] - r) * mm; g += (c[1] - g) * mm; b += (c[2] - b) * mm;
+      }
+      if (gl > 0 && !o.led) { // without the LED: darker and no longer amber
+        const k = 1 - .86 * gl, a = (r + g + b) / 3, q = .75 * gl;
+        r = (r + (a - r) * q) * k; g = (g + (a - g) * q) * k; b = (b + (a - b) * q) * k + 3 * gl;
+      }
+      d[i] = r; d[i + 1] = g; d[i + 2] = b; d[i + 3] = 255;
+    }
+    return out;
+  }
+  function show() {
+    const o = options(), cm = new FormData(cfgForm).get('w');
+    if (dim.textContent !== cm + ' cm') { dim.textContent = cm + ' cm'; dim.classList.add('bump'); setTimeout(() => dim.classList.remove('bump'), 220); }
+    cap.textContent = `${NAMES.body[o.body]} · ${NAMES.panel[o.panel]} · ${NAMES.metal[o.metal]} · LED ${o.led ? 'açık' : 'kapalı'}`;
+    const key = JSON.stringify(o);
+    if (!src || key === shown) return;
+    shown = key;
+    if (busy) busy(); // a wipe is still running: settle it first
+    const img = render(o);
+    if (reduce) { now.getContext('2d').putImageData(img, 0, 0); return; }
+    next.getContext('2d').putImageData(img, 0, 0);
+    next.classList.remove('go'); seam.classList.remove('go'); void next.offsetWidth;
+    next.classList.add('go'); seam.classList.add('go');
+    const done = () => { busy = null; now.getContext('2d').drawImage(next, 0, 0); next.classList.remove('go'); seam.classList.remove('go'); };
+    const timer = setTimeout(done, 850);
+    busy = () => { clearTimeout(timer); done(); };
+  }
+  cfgForm.addEventListener('input', show);
+  new IntersectionObserver(([e], io) => {
+    if (!e.isIntersecting) return;
+    io.disconnect();
+    Promise.all([pixels('img/tasarla.webp'), pixels('img/tasarla-mask.png'), pixels('img/tasarla-glow.png'), pixels('img/mat/traverten.webp', 768, 768)]).then(([a, m, g, t]) => {
+      prepare(a, m, g, t);
+      shown = JSON.stringify(options());
+      now.getContext('2d').putImageData(render(options()), 0, 0);
+      view.classList.add('live');
+    }).catch(() => {}); // the plain photo stays
+  }, { rootMargin: '400px 0px' }).observe(view);
 })();
 </script>

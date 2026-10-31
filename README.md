@@ -30,20 +30,23 @@ scrubbed by scroll over film seconds 0–12, telling Arkhera's own process:
 - The whole stage pushes in slightly (scale 1.07 → 1). Chapter captions use `data-from`/`data-to`
   in film seconds; annotation tags use `data-d` / `data-m`, a point on the desktop / phone image as
   fractions of its width and height. Re-place them when the images change.
-- The site loads no 3D library: the opener is images, the unit section an SVG drawing.
+- The site loads no 3D library: everything is images and canvas.
 - `prefers-reduced-motion`, no JS, or `?still` show the dusk frame and the four chapters as text.
 
 ## Other sections
 
 - Stüdyo, Projeler (sideways scroll on wide screens with a mouse, native swipe elsewhere),
   Hizmetler (the row in the middle of the screen lights up and swaps the picture).
-- **Ünite tasarla**: the opener's TV wall as a scaled front elevation (SVG, 1 unit = 1 cm, drawn in
-  `arkhera.html`) and a material board, both drawn from the options: width 180–440 cm, body, centre
-  panel, metal, LED. Material changes wipe in behind the opener's brass line; width changes ease.
-  On phones and tablets the drawing stays pinned above the options. The "Örnek uygulama" tab shows
-  the real photo (`img/tasarla.webp`, from `tools/stills.py`). "Teklif al" opens WhatsApp with the choice.
-- Material samples (`img/mat/`, `tools/materials.py`): oak veneer from Poly Haven (oak_veneer_01,
-  CC0), also mapped to walnut tones; Calacatta and travertine are generated.
+- **Ünite tasarla**: the opener's real TV wall photo (`img/tasarla.webp`, from `tools/stills.py`),
+  changed in the browser for the options (body, centre panel, metal, LED); each change wipes in behind
+  the opener's brass line, and the width shows on a dimension line. "Teklif al" opens WhatsApp with the choice.
+  - Masks (`tools/masks.py` → `img/tasarla-mask.png`, `img/tasarla-glow.png`): wood (slats and cabinet,
+    with the vases, plant, books and armchair kept out), stone, the brass frame (lines fitted to the
+    photo's brass), the LED light and the whole panel face.
+  - Finishes are albedo swaps: each pixel keeps its light (brightness over average walnut) and takes
+    the new surface colour, so shadows and highlights stay. Lacquer keeps gaps and shadows but drops
+    the grain. Travertine (`tools/materials.py`, generated) is lit by the marble's light with the veins
+    blurred out. Slats on the panel are the photo's own slats from the right column, relit for the panel.
 - "İç mimari proje ve 3D tasarım" shows the white model and the finished room split down the middle
   (`img/render-split.webp`, `tools/stills.py`).
 - Contact form writes a WhatsApp message (no server).

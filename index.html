@@ -862,13 +862,13 @@ document.documentElement.classList.add('js');
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const RAMP = { // dark → light, for wood and lacquer
     ceviz: [[38, 24, 16], [150, 108, 74]], mese: [[112, 76, 44], [228, 188, 136]],
-    antrasit: [[24, 23, 22], [98, 96, 93]], krem: [[166, 156, 141], [241, 234, 223]],
+    antrasit: [[16, 16, 15], [100, 98, 95]], krem: [[124, 116, 104], [243, 237, 227]],
   };
   const TRAV = [[176, 160, 132], [234, 224, 204]], BLACK = [[18, 17, 16], [74, 72, 70]];
   const N = 1200 * 900;
   const lerp = (a, b, t) => a + (b - a) * t, clamp = t => t < 0 ? 0 : t > 1 ? 1 : t;
   const ramp = (c, t) => [lerp(c[0][0], c[1][0], t), lerp(c[0][1], c[1][1], t), lerp(c[0][2], c[1][2], t)];
-  let src = null, mask = null, glow = null, lum = null, shown = '', busy = null;
+  let src = null, mask = null, glow = null, lum = null, flat = null, shown = '', busy = null;
   const pixels = url => new Promise((ok, fail) => {
     const im = new Image();
     im.onload = () => { const c = document.createElement('canvas'); c.width = 1200; c.height = 900; const x = c.getContext('2d'); x.drawImage(im, 0, 0, 1200, 900); ok(x.getImageData(0, 0, 1200, 900).data); };
@@ -894,7 +894,9 @@ document.documentElement.classList.add('js');
         r = lerp(r, c[0], sm); g = lerp(g, c[1], sm); b = lerp(b, c[2], sm);
       }
       if (wm > 0 && o.body !== 'ceviz') {
-        const c = ramp(wood, clamp((L - .04) / .42));
+        // lacquer has no grain: take the light from the grain-free luminance and keep only some of the contrast
+        const lacquer = o.body === 'antrasit' || o.body === 'krem';
+        const c = ramp(wood, clamp(((lacquer ? flat[p] * .55 + L * .45 : L) - .04) / .42));
         r = lerp(r, c[0], wm); g = lerp(g, c[1], wm); b = lerp(b, c[2], wm);
       }
       if (mm > 0 && o.metal === 'siyah' && !cita) {
@@ -902,7 +904,7 @@ document.documentElement.classList.add('js');
         r = lerp(r, c[0], mm); g = lerp(g, c[1], mm); b = lerp(b, c[2], mm);
       }
       if (gl > 0 && !o.led) { // without the LED: darker and no longer amber
-        const k = 1 - .74 * gl, a = (r + g + b) / 3, q = .55 * gl;
+        const k = 1 - .86 * gl, a = (r + g + b) / 3, q = .75 * gl;
         r = lerp(r, a, q) * k; g = lerp(g, a, q) * k; b = lerp(b, a, q) * k + 3 * gl;
       }
       d[i] = r; d[i + 1] = g; d[i + 2] = b; d[i + 3] = 255;
@@ -933,6 +935,10 @@ document.documentElement.classList.add('js');
     Promise.all([pixels('img/tasarla.webp'), pixels('img/tasarla-mask.png'), pixels('img/tasarla-glow.png')]).then(([a, m, g]) => {
       src = a; mask = m; glow = g; lum = new Float32Array(N);
       for (let p = 0, i = 0; p < N; p++, i += 4) lum[p] = (.299 * a[i] + .587 * a[i + 1] + .114 * a[i + 2]) / 255;
+      // luminance averaged over 9 px vertically and 5 px across: the cabinet's fine grain goes, edges and slat gaps stay
+      const tmp = new Float32Array(N); flat = new Float32Array(N);
+      for (let y = 0; y < 900; y++) for (let x = 0; x < 1200; x++) { let s = 0, n = 0; for (let d = -2; d <= 2; d++) { const xx = x + d; if (xx >= 0 && xx < 1200) { s += lum[y * 1200 + xx]; n++; } } tmp[y * 1200 + x] = s / n; }
+      for (let x = 0; x < 1200; x++) { let s = 0, n = 0; for (let y = -4; y < 900; y++) { if (y + 4 < 900) { s += tmp[(y + 4) * 1200 + x]; n++; } if (y - 5 >= 0) { s -= tmp[(y - 5) * 1200 + x]; n--; } if (y >= 0) flat[y * 1200 + x] = s / n; } }
       shown = JSON.stringify(options());
       now.getContext('2d').putImageData(render(options()), 0, 0);
       view.classList.add('live');

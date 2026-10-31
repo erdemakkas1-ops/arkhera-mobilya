@@ -261,22 +261,29 @@ em{font-style:italic}
 .cfg-head h2{grid-column:1/span 7;font-size:clamp(2.5rem,4.8vw,4.8rem);line-height:.98}
 .cfg-head p{grid-column:9/span 4;margin:0;align-self:end;color:var(--bone-dim)}
 .cfg-body{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:clamp(24px,3vw,48px);align-items:start}
-.cfg-view{position:relative;aspect-ratio:4/3;max-width:100%;margin:0;background:#211a15;border-radius:2px;overflow:hidden}
-.cfg-view img,.cfg-view canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
-.cfg-view canvas{opacity:0}
-.cfg-view.live canvas{opacity:1}
-.cfg-view.live img{visibility:hidden}
-/* the next state wipes in from the right behind a brass line, as in the opener */
-.cfg-view .next{clip-path:inset(0 0 0 100%)}
-.cfg-view .next.go{clip-path:inset(0 0 0 0);transition:clip-path .8s cubic-bezier(.65,0,.35,1)}
+.cfg-view{position:relative;aspect-ratio:4/3;max-width:100%;margin:0;background:#e7dfd2;border-radius:2px;overflow:hidden}
+@media (min-width:901px){.cfg-view{position:sticky;top:calc(var(--head) + 24px)}}
+.cfg-view .still,.cfg-view canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.cfg-view .still{object-fit:cover}
+.cfg-view .gl{opacity:0;transition:opacity .6s;touch-action:pan-y;cursor:grab}
+.cfg-view .gl:active{cursor:grabbing}
+.cfg-view .gl:focus-visible{outline:2px solid var(--brass);outline-offset:-2px}
+.cfg-view.is-3d .gl{opacity:1}
+.cfg-view.is-3d .still{visibility:hidden;transition:visibility 0s .6s}
+/* a change: the old picture is pulled away to the left behind the opener's brass line */
+.cfg-view .wipe{opacity:0;pointer-events:none}
+.cfg-view .wipe.on{opacity:1}
+.cfg-view .wipe.go{clip-path:inset(0 100% 0 0);transition:clip-path .8s cubic-bezier(.65,0,.35,1)}
 .cfg-view .seam{position:absolute;top:0;bottom:0;left:100%;width:2px;margin-left:-1px;background:#e9c88f;box-shadow:0 0 14px 3px rgba(233,200,143,.55);opacity:0;pointer-events:none}
 .cfg-view .seam.go{left:0;opacity:1;transition:left .8s cubic-bezier(.65,0,.35,1)}
-.cfg-view .dim{position:absolute;left:13.3%;right:4%;top:1.6%;display:flex;align-items:center;gap:10px;font:500 .72rem/1 var(--f-mono);letter-spacing:.06em;color:var(--brass);pointer-events:none}
-.cfg-view .dim::before,.cfg-view .dim::after{content:"";flex:1;height:1px;background:currentColor}
-.cfg-view .dim span{padding:5px 8px;background:rgba(20,16,13,.78);border-radius:2px;transition:transform .3s}
-.cfg-view .dim span.bump{transform:scale(1.12)}
-.cfg-view figcaption{position:absolute;left:14px;bottom:12px;font:500 .66rem/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--bone);background:rgba(20,16,13,.7);padding:7px 10px;border-radius:2px}
-@media (prefers-reduced-motion:reduce){.cfg-view .next.go,.cfg-view .seam.go,.cfg-view .dim span{transition:none}}
+.cfg-tags{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.cfg-tag{position:absolute;left:0;top:0;padding:5px 8px;background:rgba(20,16,13,.84);color:var(--bone);font:500 .7rem/1 var(--f-mono);letter-spacing:.04em;white-space:nowrap;border-radius:2px}
+.cfg-tag.led{color:#ffd29a}
+.cfg-view .hint{position:absolute;right:12px;top:12px;display:none;font:500 .64rem/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--stone-ink);background:rgba(241,235,226,.86);padding:6px 9px;border-radius:2px;pointer-events:none}
+.cfg-view.is-3d .hint{display:block}
+.cfg-view figcaption{position:absolute;left:14px;bottom:12px;font:500 .66rem/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--bone);background:rgba(20,16,13,.78);padding:7px 10px;border-radius:2px}
+@media (prefers-reduced-motion:reduce){.cfg-view .gl{transition:none}}
+@media (max-width:760px){.cfg-view.is-3d .hint,.cfg-tag.led{display:none}.cfg-tag{font-size:.6rem;padding:4px 6px}.cfg-view figcaption{left:10px;bottom:8px;font-size:.58rem;padding:5px 7px}}
 .cfg-form{display:grid;gap:22px}
 .cfg-form fieldset{border:0;margin:0;padding:0;min-width:0}
 .cfg-form legend,.cfg-form .lbl{display:flex;justify-content:space-between;width:100%;font:500 .7rem/1.3 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--brass);margin-bottom:10px;padding:0}
@@ -558,11 +565,12 @@ input[type=range]{width:100%;accent-color:var(--brass);min-height:32px}
     </div>
     <div class="cfg-body">
       <figure class="cfg-view">
-        <img src="img/tasarla.webp" width="1200" height="900" loading="lazy" alt="Ceviz çıtalı, pirinç çerçeveli Calacatta mermer panelli TV duvarı ve altı LED aydınlatmalı asma ceviz dolap">
-        <canvas class="now" width="1200" height="900" aria-hidden="true"></canvas>
-        <canvas class="next" width="1200" height="900" aria-hidden="true"></canvas>
+        <img class="still" src="img/tasarla.webp" width="1200" height="900" loading="lazy" alt="Ceviz çıtalı, pirinç çerçeveli Calacatta mermer panelli TV duvarı ve altı LED aydınlatmalı asma ceviz dolap">
+        <canvas class="gl" tabindex="0" aria-label="TV ünitesinin 3D görünümü. Döndürmek için sürükleyin ya da sol ve sağ ok tuşlarını kullanın."></canvas>
+        <canvas class="wipe" aria-hidden="true"></canvas>
         <i class="seam"></i>
-        <div class="dim" aria-hidden="true"><span id="cfg-dim">360 cm</span></div>
+        <div class="cfg-tags" aria-hidden="true"></div>
+        <span class="hint">Sürükleyerek döndürün</span>
         <figcaption id="cfg-cap" aria-live="polite">Ceviz · Calacatta mermer · Pirinç · LED açık</figcaption>
       </figure>
       <form class="cfg-form" id="cfg-form">
@@ -856,149 +864,341 @@ document.documentElement.classList.add('js');
   cfgForm.addEventListener('submit', e => e.preventDefault());
   describe();
 
-  // the photo, recoloured for the chosen options with masks for wood, stone, frame and LED light (tools/masks.py)
-  const view = document.querySelector('.cfg-view'), now = view.querySelector('.now'), next = view.querySelector('.next');
-  const seam = view.querySelector('.seam'), dim = document.getElementById('cfg-dim'), cap = document.getElementById('cfg-cap');
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  // Each finish is an albedo swap: a pixel's light (its brightness over the surface's own average) is kept,
-  // only the surface colour changes, so shadows stay shadows and highlights stay highlights.
-  const TARGET = { mese: [198, 150, 100], krem: [222, 214, 200], antrasit: [66, 64, 62] }; // the finish where walnut was average
-  const BLACK = [34, 32, 30];
-  const N = 1200 * 900;
-  const SLAT_X = 868, SLAT_P = 56; // a run of real slats in the right column, clear of the plant, copied across the panel
-  let src = null, mask = null, glow = null, trav = null, lum = null, flat = null, stoneLight = null, colLight = null;
-  let woodAvg = .3, stoneAvg = .85, shown = '', busy = null;
-  const pixels = (url, w = 1200, h = 900) => new Promise((ok, fail) => {
-    const im = new Image();
-    im.onload = () => { const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d'); x.drawImage(im, 0, 0, w, h); ok(x.getImageData(0, 0, w, h).data); };
-    im.onerror = fail; im.src = url;
-  });
-  const options = () => { const f = new FormData(cfgForm); return { body: f.get('body'), panel: f.get('panel'), metal: f.get('metal'), led: f.get('led') === '1' }; };
-
-  // box blur of v weighted by m (so the TV, frame and surroundings do not bleed in), radius rx × ry
-  function maskedBlur(v, m, rx, ry) {
-    const a = new Float32Array(N), b = new Float32Array(N), ta = new Float32Array(N), tb = new Float32Array(N);
-    for (let p = 0; p < N; p++) { a[p] = v[p] * m[p]; b[p] = m[p]; }
-    for (let y = 0; y < 900; y++) {
-      let sa = 0, sb = 0; const o = y * 1200;
-      for (let x = -rx; x < 1200; x++) {
-        if (x + rx < 1200) { sa += a[o + x + rx]; sb += b[o + x + rx]; }
-        if (x - rx - 1 >= 0) { sa -= a[o + x - rx - 1]; sb -= b[o + x - rx - 1]; }
-        if (x >= 0) { ta[o + x] = sa; tb[o + x] = sb; }
-      }
-    }
-    const out = new Float32Array(N);
-    for (let x = 0; x < 1200; x++) {
-      let sa = 0, sb = 0;
-      for (let y = -ry; y < 900; y++) {
-        if (y + ry < 900) { sa += ta[(y + ry) * 1200 + x]; sb += tb[(y + ry) * 1200 + x]; }
-        if (y - ry - 1 >= 0) { sa -= ta[(y - ry - 1) * 1200 + x]; sb -= tb[(y - ry - 1) * 1200 + x]; }
-        if (y >= 0) out[y * 1200 + x] = sb > 1e-3 ? sa / sb : 0;
-      }
-    }
-    return out;
-  }
-
-  function prepare(a, m, g, t) {
-    src = a; mask = m; glow = g; trav = t;
-    lum = new Float32Array(N);
-    for (let p = 0, i = 0; p < N; p++, i += 4) lum[p] = (.299 * a[i] + .587 * a[i + 1] + .114 * a[i + 2]) / 255;
-    // average walnut and marble, measured on solid, unlit-by-LED pixels
-    let sw = 0, nw = 0, ss = 0, ns = 0;
-    for (let p = 0, i = 0; p < N; p++, i += 4) {
-      if (m[i] > 240 && g[i] < 20) { sw += lum[p]; nw++; }
-      if (m[i + 1] > 240) { ss += lum[p]; ns++; }
-    }
-    woodAvg = sw / nw; stoneAvg = ss / ns;
-    // lacquer: the wood's light without its fine grain
-    const wm = new Float32Array(N), sm = new Float32Array(N);
-    for (let p = 0, i = 0; p < N; p++, i += 4) { wm[p] = m[i] / 255; sm[p] = m[i + 1] / 255; }
-    flat = maskedBlur(lum, wm, 6, 6); // the wood's light, smooth: grain, gaps and slats averaged out
-    // the light on the panel without the marble's veins
-    stoneLight = maskedBlur(lum, sm, 18, 18);
-    // the slat column's light per row, to lift its real slats onto the panel
-    colLight = new Float32Array(900);
-    for (let y = 0; y < 900; y++) { let s = 0; for (let x = SLAT_X; x < SLAT_X + SLAT_P; x++) s += lum[y * 1200 + x]; colLight[y] = s / SLAT_P; }
-  }
-
-  function render(o) {
-    const out = new ImageData(1200, 900), d = out.data, T = TARGET[o.body], cita = o.panel === 'cita';
-    for (let i = 0, p = 0; p < N; p++, i += 4) {
-      let r = src[i], g = src[i + 1], b = src[i + 2];
-      const x = p % 1200, y = (p / 1200) | 0, wm = mask[i] / 255, mm = mask[i + 2] / 255, gl = glow[i] / 255;
-      // a new panel covers the whole face, frame lines and stone edges included; the frame is drawn back on top below
-      const sm = o.panel !== 'mermer' ? glow[i + 1] / 255 : 0;
-      let wood = wm, panelLight = 1; // how much of this pixel is wood after the panel is decided, and its light
-      if (sm > 0 && o.panel !== 'mermer') {
-        const light = panelLight = stoneLight[p] / stoneAvg; // 1 where the marble was average
-        let cr, cg, cb;
-        if (cita) { // a real slat from the right column, relit to this spot on the panel
-          const q = (y * 1200 + SLAT_X + ((x - 301) % SLAT_P + SLAT_P) % SLAT_P) * 4, k = light / Math.max(.05, colLight[y] / woodAvg);
-          cr = src[q] * k; cg = src[q + 1] * k; cb = src[q + 2] * k;
-        } else { // travertine, lit as the marble was
-          const q = ((y % 768) * 768 + (x % 768)) * 4, k = light * .97;
-          cr = trav[q] * k; cg = trav[q + 1] * k; cb = trav[q + 2] * k;
-        }
-        r += (cr - r) * sm; g += (cg - g) * sm; b += (cb - b) * sm;
-        if (cita) wood = Math.max(wood, sm);
-      }
-      if (wood > 0 && T) {
-        const L = (.299 * r + .587 * g + .114 * b) / 255;
-        // f: the pixel's brightness over average walnut. Oak keeps all of it (light, shadow and grain).
-        // Lacquer keeps the light and shadow (sh) but only a little of the grain and gap contrast on top of it.
-        let f = L / woodAvg;
-        if (o.body !== 'mese') {
-          const sh = wm > 0 ? flat[p] / woodAvg : panelLight;
-          // against the smooth light, gaps and shadows are clearly darker and stay as they are;
-          // the grain only ripples around it, and paint flattens that out
-          const v = f / Math.max(.02, sh), flatV = Math.pow(v, .1);
-          f = sh * (v < .55 ? v : v > .75 ? flatV : v + (flatV - v) * (v - .55) / .2);
-          if (f > .9) f = .9 + (f - .9) / (1 + 1.4 * (f - .9)); // pale paint does not burn out in the window or LED light
-        }
-        r += (T[0] * f - r) * wood; g += (T[1] * f - g) * wood; b += (T[2] * f - b) * wood;
-      }
-      if (mm > 0 && !cita) { // the frame: black, or the photo's own brass back over a new panel
-        const f = Math.min(1.6, lum[p] / .6);
-        const c = o.metal === 'siyah' ? [BLACK[0] * f, BLACK[1] * f, BLACK[2] * f] : [src[i], src[i + 1], src[i + 2]];
-        r += (c[0] - r) * mm; g += (c[1] - g) * mm; b += (c[2] - b) * mm;
-      }
-      if (gl > 0 && !o.led) { // without the LED: darker and no longer amber
-        const k = 1 - .86 * gl, a = (r + g + b) / 3, q = .75 * gl;
-        r = (r + (a - r) * q) * k; g = (g + (a - g) * q) * k; b = (b + (a - b) * q) * k + 3 * gl;
-      }
-      d[i] = r; d[i + 1] = g; d[i + 2] = b; d[i + 3] = 255;
-    }
-    return out;
-  }
-  function show() {
-    const o = options(), cm = new FormData(cfgForm).get('w');
-    if (dim.textContent !== cm + ' cm') { dim.textContent = cm + ' cm'; dim.classList.add('bump'); setTimeout(() => dim.classList.remove('bump'), 220); }
-    cap.textContent = `${NAMES.body[o.body]} · ${NAMES.panel[o.panel]} · ${NAMES.metal[o.metal]} · LED ${o.led ? 'açık' : 'kapalı'}`;
-    const key = JSON.stringify(o);
-    if (!src || key === shown) return;
-    shown = key;
-    if (busy) busy(); // a wipe is still running: settle it first
-    const img = render(o);
-    if (reduce) { now.getContext('2d').putImageData(img, 0, 0); return; }
-    next.getContext('2d').putImageData(img, 0, 0);
-    next.classList.remove('go'); seam.classList.remove('go'); void next.offsetWidth;
-    next.classList.add('go'); seam.classList.add('go');
-    const done = () => { busy = null; now.getContext('2d').drawImage(next, 0, 0); next.classList.remove('go'); seam.classList.remove('go'); };
-    const timer = setTimeout(done, 850);
-    busy = () => { clearTimeout(timer); done(); };
-  }
-  cfgForm.addEventListener('input', show);
-  new IntersectionObserver(([e], io) => {
-    if (!e.isIntersecting) return;
-    io.disconnect();
-    Promise.all([pixels('img/tasarla.webp'), pixels('img/tasarla-mask.png'), pixels('img/tasarla-glow.png'), pixels('img/mat/traverten.webp', 768, 768)]).then(([a, m, g, t]) => {
-      prepare(a, m, g, t);
-      shown = JSON.stringify(options());
-      now.getContext('2d').putImageData(render(options()), 0, 0);
-      view.classList.add('live');
-    }).catch(() => {}); // the plain photo stays
-  }, { rootMargin: '400px 0px' }).observe(view);
 })();
+</script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.min.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+// Ünite tasarla in 3D, after the Maviron configurator: the opening room's TV wall is rebuilt from the
+// options and turned slowly like a turntable; drag (or the arrow keys) to turn it yourself.
+// Material changes wipe in behind the opener's brass line, the width eases, the LED fades.
+// Without WebGL2 the real photo stays and the summary and WhatsApp message still work.
+const view = document.querySelector('.cfg-view');
+const form = document.getElementById('cfg-form');
+const hasGL = (() => { try { return !!document.createElement('canvas').getContext('webgl2'); } catch { return false; } })();
+if (hasGL) new IntersectionObserver(([e], io) => {
+  if (!e.isIntersecting) return;
+  io.disconnect();
+  mount().catch(err => console.warn('3D view unavailable', err));
+}, { rootMargin: '500px 0px' }).observe(view);
+
+const NAMES = { body: { ceviz: 'Ceviz', mese: 'Meşe', antrasit: 'Antrasit lake', krem: 'Krem lake' }, panel: { mermer: 'Calacatta mermer', traverten: 'Traverten', cita: 'Ahşap çıta' }, metal: { pirinc: 'Pirinç', siyah: 'Siyah' } };
+const read = () => { const f = new FormData(form); return { w: +f.get('w') / 100, body: f.get('body'), panel: f.get('panel'), metal: f.get('metal'), led: f.get('led') === '1' }; };
+
+async function mount() {
+  const post = innerWidth > 760;
+  const [THREE, { RoomEnvironment }, { RoundedBoxGeometry }, { mergeGeometries }, ...pp] = await Promise.all([
+    import('three'),
+    import('three/addons/environments/RoomEnvironment.js'),
+    import('three/addons/geometries/RoundedBoxGeometry.js'),
+    import('three/addons/utils/BufferGeometryUtils.js'),
+    ...(post ? ['EffectComposer', 'RenderPass', 'GTAOPass', 'OutputPass'].map(n => import(`three/addons/postprocessing/${n}.js`)) : []),
+  ]);
+  const canvas = view.querySelector('.gl'), wipe = view.querySelector('.wipe'), seam = view.querySelector('.seam');
+  const tagLayer = view.querySelector('.cfg-tags'), cap = document.getElementById('cfg-cap');
+  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, post ? 1.5 : 1.25));
+  renderer.toneMapping = THREE.NeutralToneMapping;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color('#e2ddd4');
+  scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), .04).texture;
+  scene.environmentIntensity = .42;
+  const camera = new THREE.PerspectiveCamera(30, 1, .1, 60);
+
+  // ---- materials: real oak veneer (also tinted to walnut, as in the Maviron demo), lacquer, stone, metal ----
+  const loader = new THREE.TextureLoader();
+  const tex = (path, srgb, rx = 1, ry = rx) => {
+    const t = loader.load(`img/${path}.webp`, () => { dirty = true; });
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.anisotropy = 8;
+    t.repeat.set(rx, ry);
+    if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  };
+  const oak = { map: tex('tex/oak-diff', true), roughnessMap: tex('tex/oak-rough'), normalMap: tex('tex/oak-nor') };
+  const WOOD = {
+    ceviz: new THREE.MeshStandardMaterial({ ...oak, color: '#73503a', roughness: .8, normalScale: new THREE.Vector2(.45, .45) }),
+    mese: new THREE.MeshStandardMaterial({ ...oak, color: '#f1dcc0', roughness: .85, normalScale: new THREE.Vector2(.45, .45) }),
+    antrasit: new THREE.MeshPhysicalMaterial({ color: '#33312f', roughness: .42, clearcoat: .25, clearcoatRoughness: .4 }),
+    krem: new THREE.MeshPhysicalMaterial({ color: '#e8e0d2', roughness: .45, clearcoat: .2, clearcoatRoughness: .4 }),
+  };
+  const BACKER = { ceviz: '#1c1510', mese: '#3a2a1b', antrasit: '#151413', krem: '#b4a998' };
+  const STONE = {
+    mermer: new THREE.MeshPhysicalMaterial({ map: tex('mat/mermer', true), roughness: .16, clearcoat: .45, clearcoatRoughness: .15 }),
+    traverten: new THREE.MeshStandardMaterial({ map: tex('mat/traverten', true, 1, 1.15), roughness: .72 }),
+  };
+  const METAL = {
+    pirinc: new THREE.MeshStandardMaterial({ color: '#c79b5c', metalness: 1, roughness: .26 }),
+    siyah: new THREE.MeshStandardMaterial({ color: '#141312', metalness: .5, roughness: .38 }),
+  };
+  const backer = new THREE.MeshStandardMaterial({ color: BACKER.ceviz, roughness: .9 });
+  const tvMat = new THREE.MeshPhysicalMaterial({ color: '#0b0c0f', roughness: .12, metalness: .2, clearcoat: 1, clearcoatRoughness: .04 });
+  const bezel = new THREE.MeshStandardMaterial({ color: '#101112', roughness: .45 });
+  const ceramic = new THREE.MeshStandardMaterial({ color: '#efe9df', roughness: .55 });
+  const leaf = new THREE.MeshStandardMaterial({ color: '#56703e', roughness: .75, flatShading: true });
+  const paper = [new THREE.MeshStandardMaterial({ color: '#efe9de', roughness: .85 }), new THREE.MeshStandardMaterial({ color: '#d8cfc0', roughness: .85 })];
+  const wallMat = new THREE.MeshStandardMaterial({ color: '#d8d2c8', roughness: .94 });
+  const dimMat = new THREE.MeshBasicMaterial({ color: '#9a6a2e' });
+  // the LED: a warm strip, light pooling on the floor and washing the wall under the cabinet
+  const pool = (() => {
+    const c = document.createElement('canvas'); c.width = c.height = 128;
+    const k = c.getContext('2d'), g = k.createRadialGradient(64, 64, 0, 64, 64, 64);
+    g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    k.fillStyle = g; k.fillRect(0, 0, 128, 128);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+  })();
+  const stripMat = new THREE.MeshBasicMaterial({ color: '#ffd9a6', toneMapped: false });
+  const glowMat = new THREE.MeshBasicMaterial({ map: pool, color: '#ffb766', transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
+
+  // ---- the room: herringbone oak floor, plaster wall, window light from the left ----
+  // satin oak: the room's light panels must not mirror in it as hot spots
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(16, 12), new THREE.MeshStandardMaterial({ map: tex('tex/floor-diff', true, 19, 14.25), normalMap: tex('tex/floor-nor', false, 19, 14.25), color: '#d2c6b5', roughness: .72, envMapIntensity: .35, normalScale: new THREE.Vector2(.4, .4) }));
+  floor.rotation.x = -Math.PI / 2; floor.position.z = 5.9; floor.receiveShadow = true; scene.add(floor);
+  const wall = new THREE.Mesh(new THREE.PlaneGeometry(16, 5), wallMat);
+  wall.position.set(0, 2.5, 0); wall.receiveShadow = true; scene.add(wall);
+  const skirt = new THREE.Mesh(new THREE.BoxGeometry(16, .07, .012), new THREE.MeshStandardMaterial({ color: '#f1ece4', roughness: .6 }));
+  skirt.position.set(0, .035, .006); skirt.receiveShadow = true; scene.add(skirt);
+  scene.add(new THREE.HemisphereLight('#f5efe7', '#6a5847', .32));
+  const sun = new THREE.DirectionalLight('#fff3e2', 2.1);
+  sun.position.set(-3.6, 4.4, 4.2); sun.target.position.set(0, 1, 0);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(post ? 2048 : 1024, post ? 2048 : 1024);
+  Object.assign(sun.shadow.camera, { left: -3.6, right: 3.6, top: 3.6, bottom: -1.2, near: .5, far: 14 });
+  sun.shadow.bias = -.0003; sun.shadow.normalBias = .015; sun.shadow.radius = 4;
+  scene.add(sun, sun.target);
+  // hidden LED: three soft lights along the strip so it reads as a line of light, not a spot
+  const ledLights = [-1, 0, 1].map(() => { const l = new THREE.PointLight('#ffb86a', 0, 1.6, 2); scene.add(l); return l; });
+  const floorGlow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), glowMat);
+  floorGlow.rotation.x = -Math.PI / 2; scene.add(floorGlow);
+  // the wash on the wall under the cabinet: brightest at the strip, fading to the floor
+  const wash = (() => {
+    const c = document.createElement('canvas'); c.width = 8; c.height = 128;
+    const k = c.getContext('2d'), g = k.createLinearGradient(0, 0, 0, 128);
+    g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.35, 'rgba(255,255,255,.45)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    k.fillStyle = g; k.fillRect(0, 0, 8, 128);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+  })();
+  const washMat = new THREE.MeshBasicMaterial({ map: wash, color: '#ffb766', transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
+  const wallGlow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), washMat);
+  scene.add(wallGlow);
+
+  let composer = null;
+  if (post) {
+    const [{ EffectComposer }, { RenderPass }, { GTAOPass }, { OutputPass }] = pp;
+    composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 4 }));
+    composer.addPass(new RenderPass(scene, camera));
+    const gtao = new GTAOPass(scene, camera, 1, 1);
+    gtao.updateGtaoMaterial({ radius: .25, distanceExponent: 1.5, thickness: 1, scale: 1.1, samples: 16 });
+    composer.addPass(gtao);
+    composer.addPass(new OutputPass());
+  }
+
+  // ---- building the unit ----
+  const H = 2.7, PH = 2.45, CAB_H = .32, CAB_D = .42, CAB_Y = .22;
+  const rbox = (w, h, d, r) => new RoundedBoxGeometry(w, h, d, 2, Math.min(r, w / 3, h / 3, d / 3));
+  // UVs in metres from the part's position, so neighbouring slats and fronts each get their own grain;
+  // across = grain runs horizontally (drawer fronts, the top)
+  const woodUV = (geo, ox, oy, across) => {
+    const p = geo.attributes.position, n = geo.attributes.normal, uv = geo.attributes.uv;
+    const du = Math.random() * 3, dv = Math.random() * 3;
+    for (let i = 0; i < p.count; i++) {
+      const ax = Math.abs(n.getX(i)), ay = Math.abs(n.getY(i));
+      const a = ay > .5 ? p.getZ(i) : ax > .5 ? p.getZ(i) : p.getX(i) + ox, b = p.getY(i) + oy;
+      const [u, v] = across ? [b, a] : [a, b];
+      uv.setXY(i, u / .9 + du, v / .9 + dv);
+    }
+    return geo;
+  };
+  let unit = new THREE.Group(); scene.add(unit);
+  const tags = [];
+  const put = (geo, mat, x, y, z, shadow = true) => {
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(x, y, z); m.castShadow = shadow; m.receiveShadow = true;
+    unit.add(m); return m;
+  };
+  const tag = (text, x, y, z, cls = '') => {
+    const el = document.createElement('span');
+    el.className = 'cfg-tag ' + cls; el.textContent = text;
+    tagLayer.append(el); tags.push({ el, p: new THREE.Vector3(x, y, z) });
+  };
+
+  function build(o, W) {
+    unit.traverse(m => m.geometry && m.geometry.dispose());
+    scene.remove(unit); unit = new THREE.Group(); scene.add(unit);
+    tags.length = 0; tagLayer.replaceChildren();
+    const wood = WOOD[o.body], metal = METAL[o.metal], stone = o.panel !== 'cita';
+    backer.color.set(BACKER[o.body]);
+    const lw = W * .13, pw = stone ? W * .55 : 0, x0 = -W / 2, x1 = W / 2, px0 = x0 + lw;
+    // slat columns: 32 mm slats every 55 mm on a dark backer, merged into one mesh
+    const slats = (a, b) => {
+      put(new THREE.BoxGeometry(b - a, H, .012), backer, (a + b) / 2, H / 2, .006, false);
+      const pitch = .055, n = Math.floor((b - a) / pitch), pad = (b - a - n * pitch) / 2, parts = [];
+      for (let i = 0; i < n; i++) {
+        const x = a + pad + pitch / 2 + i * pitch, g = new THREE.BoxGeometry(.032, H, .026);
+        if (wood.map) woodUV(g, x, 0, false);
+        g.translate(x, H / 2, .025); parts.push(g);
+      }
+      if (parts.length) { put(mergeGeometries(parts), wood, 0, 0, 0); parts.forEach(g => g.dispose()); }
+    };
+    if (stone) { slats(x0, px0); slats(px0 + pw, x1); } else slats(x0, x1);
+    const cTop = CAB_Y + CAB_H;
+    if (stone) {
+      put(new THREE.BoxGeometry(pw, PH, .03), STONE[o.panel], px0 + pw / 2, PH / 2, .015);
+      // the inset metal frame
+      const ins = Math.min(.14, pw * .07), l = px0 + ins, r = px0 + pw - ins, bt = cTop + .06, tp = PH - ins, cx = px0 + pw / 2;
+      put(new THREE.BoxGeometry(r - l, .008, .006), metal, cx, tp, .033, false);
+      put(new THREE.BoxGeometry(r - l, .008, .006), metal, cx, bt, .033, false);
+      put(new THREE.BoxGeometry(.008, tp - bt, .006), metal, l, (tp + bt) / 2, .033, false);
+      put(new THREE.BoxGeometry(.008, tp - bt, .006), metal, r, (tp + bt) / 2, .033, false);
+    }
+    // television
+    const tvW = Math.min(1.55, (stone ? pw : W * .5) * .68), tvH = tvW * .5625, tvX = stone ? px0 + pw / 2 : 0;
+    put(rbox(tvW + .012, tvH + .012, .03, .004), bezel, tvX, 1.42, .06);
+    put(new THREE.PlaneGeometry(tvW, tvH), tvMat, tvX, 1.42, .0755, false);
+    // floating cabinet: carcass, top, end panels, a row of push-to-open drawer fronts
+    put(new THREE.BoxGeometry(W - .04, CAB_H - .024, CAB_D - .02), backer, 0, CAB_Y + (CAB_H - .024) / 2, (CAB_D - .02) / 2);
+    const top = rbox(W, .022, CAB_D, .003); if (wood.map) woodUV(top, 0, 0, true);
+    put(top, wood, 0, cTop - .011, CAB_D / 2);
+    for (const s of [-1, 1]) { const e = rbox(.02, CAB_H - .022, CAB_D, .003); if (wood.map) woodUV(e, s, 0, true); put(e, wood, s * (W / 2 - .01), CAB_Y + (CAB_H - .022) / 2, CAB_D / 2); }
+    const n = Math.max(3, Math.round(W / .6)), gap = .004, fw = (W - .04 - gap * (n - 1)) / n;
+    for (let i = 0; i < n; i++) {
+      const x = -W / 2 + .02 + fw / 2 + i * (fw + gap), g = rbox(fw, CAB_H - .03, .02, .003);
+      if (wood.map) woodUV(g, x, 0, true);
+      put(g, wood, x, CAB_Y + (CAB_H - .022) / 2, CAB_D - .01);
+    }
+    put(new THREE.BoxGeometry(W - .06, .006, .01), stripMat, 0, CAB_Y - .004, CAB_D - .07, false);
+    floorGlow.scale.set(W * 1.2, 1.3, 1); floorGlow.position.set(0, .002, .5);
+    wallGlow.scale.set(W - .04, CAB_Y, 1); wallGlow.position.set(0, CAB_Y / 2, .014);
+    ledLights.forEach((l, i) => l.position.set((i - 1) * W * .33, CAB_Y - .03, .3));
+    // the room's objects: ring vase and small vase on the left, a plant on books on the right
+    const vx = px0 - .02;
+    const ring = put(new THREE.TorusGeometry(.085, .038, 24, 48), ceramic, vx, cTop + .123, CAB_D * .45); ring.scale.z = .75;
+    put(new THREE.SphereGeometry(.045, 24, 16), ceramic, vx + .16, cTop + .045, CAB_D * .5);
+    const bx = x1 - Math.min(.36, W * .1);
+    put(rbox(.26, .03, .19, .004), paper[0], bx, cTop + .015, CAB_D * .5);
+    put(rbox(.24, .026, .17, .004), paper[1], bx, cTop + .043, CAB_D * .5);
+    put(new THREE.CylinderGeometry(.075, .062, .13, 32), ceramic, bx, cTop + .121, CAB_D * .5);
+    for (let i = 0; i < 9; i++) {
+      const a = i / 9 * Math.PI * 2, r = .05 + (i % 3) * .025, l = put(new THREE.IcosahedronGeometry(.055, 1), leaf, bx + Math.cos(a) * r, cTop + .24 + (i % 4) * .025, CAB_D * .5 + Math.sin(a) * r);
+      l.scale.set(1, .42, .7); l.rotation.set(Math.sin(a) * .5, a, Math.cos(a) * .4);
+    }
+    // dimensions, as on a drawing: width over the top, height at the right side
+    const dy = H + .1, hx = x1 + .12;
+    put(new THREE.BoxGeometry(W, .006, .006), dimMat, 0, dy, .03, false);
+    for (const x of [x0, x1]) put(new THREE.BoxGeometry(.006, .1, .006), dimMat, x, dy, .03, false);
+    put(new THREE.BoxGeometry(.006, H, .006), dimMat, hx, H / 2, .03, false);
+    for (const y of [0, H]) put(new THREE.BoxGeometry(.1, .006, .006), dimMat, hx, y, .03, false);
+    tag(`${Math.round(W * 100)} cm`, 0, dy, .03);
+    tag('270 cm', hx, H * .55, .03);
+    tag('LED · 3000 K', x1 - .35, CAB_Y - .05, CAB_D, 'led');
+    focus.set(0, 1.3, 0);
+    halfW = W / 2 + .45;
+  }
+
+  // ---- the LED: fades between off and on ----
+  let ledK = 0, ledTo = 0;
+  function led(k) {
+    stripMat.color.setRGB(.55 + 1.9 * k, .5 + 1.55 * k, .45 + 1.1 * k);
+    glowMat.opacity = .55 * k; washMat.opacity = .8 * k;
+    ledLights.forEach(l => { l.intensity = .55 * k; });
+    for (const t of tags) if (t.el.classList.contains('led')) t.el.style.opacity = k;
+  }
+
+  // ---- camera: a turntable in front of the wall; drag to turn, a slow sway until then ----
+  const focus = new THREE.Vector3(0, 1.3, 0);
+  let halfW = 2.3, yaw = .3, touched = false, dragging = false, lastX = 0, visible = true, dirty = true, cw = 1, ch = 1;
+  function render() {
+    const vf = THREE.MathUtils.degToRad(camera.fov / 2), hf = Math.atan(Math.tan(vf) * camera.aspect);
+    const dist = Math.max(halfW / Math.tan(hf), 1.85 / Math.tan(vf)) * 1.04, el = .1;
+    camera.position.set(focus.x + Math.sin(yaw) * Math.cos(el) * dist, focus.y + Math.sin(el) * dist, focus.z + Math.cos(yaw) * Math.cos(el) * dist);
+    camera.lookAt(focus);
+    camera.updateMatrixWorld();
+    composer ? composer.render() : renderer.render(scene, camera);
+    const v = new THREE.Vector3();
+    for (const { el, p } of tags) {
+      v.copy(p).project(camera);
+      el.style.transform = `translate(${((v.x + 1) / 2 * cw).toFixed(1)}px,${((1 - v.y) / 2 * ch).toFixed(1)}px) translate(-50%,-50%)`;
+    }
+    dirty = false;
+  }
+  function resize() {
+    cw = view.clientWidth; ch = view.clientHeight;
+    renderer.setSize(cw, ch, false);
+    if (composer) { composer.setPixelRatio(renderer.getPixelRatio()); composer.setSize(cw, ch); }
+    camera.aspect = cw / ch; camera.updateProjectionMatrix();
+    dirty = true;
+  }
+  canvas.addEventListener('pointerdown', e => { dragging = touched = true; lastX = e.clientX; canvas.setPointerCapture(e.pointerId); });
+  canvas.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    yaw = THREE.MathUtils.clamp(yaw - (e.clientX - lastX) * .006, -1.1, 1.1);
+    lastX = e.clientX; dirty = true;
+  });
+  for (const ev of ['pointerup', 'pointercancel']) canvas.addEventListener(ev, () => { dragging = false; });
+  canvas.addEventListener('keydown', e => {
+    const d = { ArrowLeft: .12, ArrowRight: -.12 }[e.key];
+    if (!d) return;
+    e.preventDefault(); touched = true;
+    yaw = THREE.MathUtils.clamp(yaw + d, -1.1, 1.1); dirty = true;
+  });
+  new IntersectionObserver(([en]) => { visible = en.isIntersecting; }).observe(view);
+
+  // ---- options → scene ----
+  let shown = read(), W = shown.w, wTween = null, wipeTimer = 0;
+  function caption(o) { cap.textContent = `${NAMES.body[o.body]} · ${NAMES.panel[o.panel]} · ${NAMES.metal[o.metal]} · LED ${o.led ? 'açık' : 'kapalı'}`; }
+  function wipeIn(change) {
+    if (calm) { change(); dirty = true; return; }
+    render();                       // freeze the current picture on the overlay ...
+    clearTimeout(wipeTimer);
+    wipe.width = canvas.width; wipe.height = canvas.height;
+    wipe.getContext('2d').drawImage(canvas, 0, 0);
+    wipe.classList.remove('go'); seam.classList.remove('go');
+    wipe.classList.add('on'); void wipe.offsetWidth;
+    change(); render();             // ... draw the new one under it, then pull the old one away
+    wipe.classList.add('go'); seam.classList.add('go');
+    wipeTimer = setTimeout(() => { wipe.classList.remove('on', 'go'); seam.classList.remove('go'); }, 820);
+  }
+  form.addEventListener('input', () => {
+    const o = read();
+    caption(o);
+    const matChanged = o.body !== shown.body || o.panel !== shown.panel || o.metal !== shown.metal;
+    if (o.led !== shown.led) ledTo = o.led ? 1 : 0;
+    if (o.w !== shown.w) wTween = { from: W, to: o.w, t0: performance.now() };
+    shown = o;
+    if (matChanged) wipeIn(() => build(shown, W));
+    if (calm) { if (wTween) { W = o.w; wTween = null; build(shown, W); } ledK = ledTo; led(ledK); dirty = true; }
+  });
+
+  const t0 = performance.now();
+  function frame(now) {
+    if (!touched && !calm && visible) { yaw = .3 + Math.sin((now - t0) / 4200) * .34; dirty = true; }
+    if (wTween) {
+      const k = Math.min(1, (now - wTween.t0) / 480), e = 1 - Math.pow(1 - k, 3);
+      W = wTween.from + (wTween.to - wTween.from) * e; build(shown, W); led(ledK);
+      if (k === 1) wTween = null;
+      dirty = true;
+    }
+    if (Math.abs(ledTo - ledK) > .001) { ledK += (ledTo - ledK) * .12; if (Math.abs(ledTo - ledK) < .01) ledK = ledTo; led(ledK); dirty = true; }
+    if (dirty && visible) render();
+    requestAnimationFrame(frame);
+  }
+
+  build(shown, W);
+  ledK = ledTo = shown.led ? 1 : 0; led(ledK);
+  caption(shown);
+  addEventListener('resize', resize);
+  resize(); render();
+  view.classList.add('is-3d');
+  requestAnimationFrame(frame);
+}
 </script>
 
 </body>

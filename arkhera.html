@@ -964,7 +964,7 @@ document.documentElement.classList.add('js');
       document.querySelector(`.board [data-v="${k}"]`).textContent = VAL[k](o);
       if (changed.includes(k) || (k === 'panel' && changed.includes('body') && o.panel === 'cita')) { sw.classList.remove('swap'); void sw.offsetWidth; sw.classList.add('swap'); }
     }
-    cap.textContent = `Ön görünüş · ${NAMES.body[o.body]}, ${NAMES.panel[o.panel].toLowerCase()}, ${NAMES.metal[o.metal].toLowerCase()} metal, LED ${o.led ? 'açık' : 'kapalı'}`;
+    cap.textContent = `Ön görünüş · ${NAMES.body[o.body]}, ${{ mermer: 'Calacatta mermer', traverten: 'traverten', cita: 'ahşap çıta' }[o.panel]}, ${NAMES.metal[o.metal].toLocaleLowerCase('tr')} metal, LED ${o.led ? 'açık' : 'kapalı'}`;
   }
   function paint() { now.innerHTML = drawing(shown, W, 'n', scale()); }
 

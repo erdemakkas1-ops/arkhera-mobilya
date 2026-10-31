@@ -24,21 +24,28 @@ scrubbed by scroll over film seconds 0–12, telling Arkhera's own process:
 3. **Özel üretim** — a brass scan line wipes right to left, revealing the finished room (`3-uretim`).
 4. **Anahtar teslim** — fades to dusk with the LEDs on (`4-teslim`); closing call to action.
 
-- The frames are Gemini images (see `GEMINI.md` for the prompts and order). Until they arrive,
-  placeholders rendered from the earlier three.js scene (commit bc9c9c6) fill `img/film/`.
-  `py -3 tools/keyframes.py [folder]` crops and converts a set (default folder `gemini/`).
+- The frames are Gemini images (see `GEMINI.md` for the prompts and order; originals in `gemini/`,
+  kept out of git). `py -3 tools/keyframes.py [folder]` aligns them to `3-uretim`, crops and converts
+  them; a printed match well below 0.5 means Gemini moved the camera and the frame should be redone.
 - The whole stage pushes in slightly (scale 1.07 → 1). Chapter captions use `data-from`/`data-to`
   in film seconds; annotation tags use `data-d` / `data-m`, a point on the desktop / phone image as
   fractions of its width and height. Re-place them when the images change.
-- No WebGL in the opener: three.js loads only when the configurator is ~600 px away.
+- The site loads no 3D library: the opener is images, the unit section an SVG drawing.
 - `prefers-reduced-motion`, no JS, or `?still` show the dusk frame and the four chapters as text.
 
 ## Other sections
 
 - Stüdyo, Projeler (sideways scroll on wide screens with a mouse, native swipe elsewhere),
   Hizmetler (the row in the middle of the screen lights up and swaps the picture).
-- **Ünite tasarla**: the opener's TV unit in 3D (`buildWallUnit`) with width 180–440 cm,
-  body, centre panel, metal and LED options. "Teklif al" opens WhatsApp with the configuration.
+- **Ünite tasarla**: the opener's TV wall as a scaled front elevation (SVG, 1 unit = 1 cm, drawn in
+  `arkhera.html`) and a material board, both drawn from the options: width 180–440 cm, body, centre
+  panel, metal, LED. Material changes wipe in behind the opener's brass line; width changes ease.
+  On phones and tablets the drawing stays pinned above the options. The "Örnek uygulama" tab shows
+  the real photo (`img/tasarla.webp`, from `tools/stills.py`). "Teklif al" opens WhatsApp with the choice.
+- Material samples (`img/mat/`, `tools/materials.py`): oak veneer from Poly Haven (oak_veneer_01,
+  CC0), also mapped to walnut tones; Calacatta and travertine are generated.
+- "İç mimari proje ve 3D tasarım" shows the white model and the finished room split down the middle
+  (`img/render-split.webp`, `tools/stills.py`).
 - Contact form writes a WhatsApp message (no server).
 
 ## Build and preview
@@ -65,4 +72,4 @@ wraps it for the real site (favicon, share image, canonical/og URLs with a site 
   redrawn from the 150 px profile picture).
 - Confirm: which number is on WhatsApp (assumed 0555 752 47 19, the one most captions give),
   that 0531 837 56 06 is the office line, the "ücretsiz keşif ve metraj" offer, and the service area.
-- The configurator dimensions are illustrative (cabinet 36 × 42 cm, 262 cm height).
+- The unit dimensions are illustrative (270 cm high, cabinet 32 × 42 cm, a drawer per ~60 cm).

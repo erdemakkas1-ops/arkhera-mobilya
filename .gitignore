@@ -7,3 +7,4 @@ __pycache__/
 .env*
 .playwright-mcp/
 gemini/
+textures-raw/

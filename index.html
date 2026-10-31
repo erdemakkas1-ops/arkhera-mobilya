@@ -262,8 +262,21 @@ em{font-style:italic}
 .cfg-head p{grid-column:9/span 4;margin:0;align-self:end;color:var(--bone-dim)}
 .cfg-body{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:clamp(24px,3vw,48px);align-items:start}
 .cfg-view{position:relative;aspect-ratio:4/3;max-width:100%;margin:0;background:#211a15;border-radius:2px;overflow:hidden}
-.cfg-view img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cfg-view img,.cfg-view canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.cfg-view canvas{opacity:0}
+.cfg-view.live canvas{opacity:1}
+.cfg-view.live img{visibility:hidden}
+/* the next state wipes in from the right behind a brass line, as in the opener */
+.cfg-view .next{clip-path:inset(0 0 0 100%)}
+.cfg-view .next.go{clip-path:inset(0 0 0 0);transition:clip-path .8s cubic-bezier(.65,0,.35,1)}
+.cfg-view .seam{position:absolute;top:0;bottom:0;left:100%;width:2px;margin-left:-1px;background:#e9c88f;box-shadow:0 0 14px 3px rgba(233,200,143,.55);opacity:0;pointer-events:none}
+.cfg-view .seam.go{left:0;opacity:1;transition:left .8s cubic-bezier(.65,0,.35,1)}
+.cfg-view .dim{position:absolute;left:13.3%;right:4%;top:1.6%;display:flex;align-items:center;gap:10px;font:500 .72rem/1 var(--f-mono);letter-spacing:.06em;color:var(--brass);pointer-events:none}
+.cfg-view .dim::before,.cfg-view .dim::after{content:"";flex:1;height:1px;background:currentColor}
+.cfg-view .dim span{padding:5px 8px;background:rgba(20,16,13,.78);border-radius:2px;transition:transform .3s}
+.cfg-view .dim span.bump{transform:scale(1.12)}
 .cfg-view figcaption{position:absolute;left:14px;bottom:12px;font:500 .66rem/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--bone);background:rgba(20,16,13,.7);padding:7px 10px;border-radius:2px}
+@media (prefers-reduced-motion:reduce){.cfg-view .next.go,.cfg-view .seam.go,.cfg-view .dim span{transition:none}}
 .cfg-form{display:grid;gap:22px}
 .cfg-form fieldset{border:0;margin:0;padding:0;min-width:0}
 .cfg-form legend,.cfg-form .lbl{display:flex;justify-content:space-between;width:100%;font:500 .7rem/1.3 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--brass);margin-bottom:10px;padding:0}
@@ -283,7 +296,6 @@ input[type=range]{width:100%;accent-color:var(--brass);min-height:32px}
 @media (max-width:900px){
   .cfg-head h2,.cfg-head p{grid-column:1/-1}
   .cfg-body{grid-template-columns:1fr}
-  .cfg-view{aspect-ratio:1/1}
 }
 
 /* ---------- contact ---------- */
@@ -546,8 +558,12 @@ input[type=range]{width:100%;accent-color:var(--brass);min-height:32px}
     </div>
     <div class="cfg-body">
       <figure class="cfg-view">
-        <picture><source media="(max-width:900px)" srcset="img/tasarla-m.webp"><img src="img/tasarla.webp" width="1200" height="900" loading="lazy" alt="Ceviz çıtalı, pirinç çerçeveli Calacatta mermer panelli TV duvarı ve altı LED aydınlatmalı asma ceviz dolap"></picture>
-        <figcaption>Örnek: ceviz, Calacatta mermer, pirinç, LED</figcaption>
+        <img src="img/tasarla.webp" width="1200" height="900" loading="lazy" alt="Ceviz çıtalı, pirinç çerçeveli Calacatta mermer panelli TV duvarı ve altı LED aydınlatmalı asma ceviz dolap">
+        <canvas class="now" width="1200" height="900" aria-hidden="true"></canvas>
+        <canvas class="next" width="1200" height="900" aria-hidden="true"></canvas>
+        <i class="seam"></i>
+        <div class="dim" aria-hidden="true"><span id="cfg-dim">360 cm</span></div>
+        <figcaption id="cfg-cap" aria-live="polite">Ceviz · Calacatta mermer · Pirinç · LED açık</figcaption>
       </figure>
       <form class="cfg-form" id="cfg-form">
         <div>
@@ -839,6 +855,89 @@ document.documentElement.classList.add('js');
   cfgForm.addEventListener('input', describe);
   cfgForm.addEventListener('submit', e => e.preventDefault());
   describe();
+
+  // the photo, recoloured for the chosen options with masks for wood, stone, frame and LED light (tools/masks.py)
+  const view = document.querySelector('.cfg-view'), now = view.querySelector('.now'), next = view.querySelector('.next');
+  const seam = view.querySelector('.seam'), dim = document.getElementById('cfg-dim'), cap = document.getElementById('cfg-cap');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const RAMP = { // dark → light, for wood and lacquer
+    ceviz: [[38, 24, 16], [150, 108, 74]], mese: [[112, 76, 44], [228, 188, 136]],
+    antrasit: [[24, 23, 22], [98, 96, 93]], krem: [[166, 156, 141], [241, 234, 223]],
+  };
+  const TRAV = [[176, 160, 132], [234, 224, 204]], BLACK = [[18, 17, 16], [74, 72, 70]];
+  const N = 1200 * 900;
+  const lerp = (a, b, t) => a + (b - a) * t, clamp = t => t < 0 ? 0 : t > 1 ? 1 : t;
+  const ramp = (c, t) => [lerp(c[0][0], c[1][0], t), lerp(c[0][1], c[1][1], t), lerp(c[0][2], c[1][2], t)];
+  let src = null, mask = null, glow = null, lum = null, shown = '', busy = null;
+  const pixels = url => new Promise((ok, fail) => {
+    const im = new Image();
+    im.onload = () => { const c = document.createElement('canvas'); c.width = 1200; c.height = 900; const x = c.getContext('2d'); x.drawImage(im, 0, 0, 1200, 900); ok(x.getImageData(0, 0, 1200, 900).data); };
+    im.onerror = fail; im.src = url;
+  });
+  const options = () => { const f = new FormData(cfgForm); return { body: f.get('body'), panel: f.get('panel'), metal: f.get('metal'), led: f.get('led') === '1' }; };
+  function render(o) {
+    const out = new ImageData(1200, 900), d = out.data, wood = RAMP[o.body];
+    for (let i = 0, p = 0; p < N; p++, i += 4) {
+      let r = src[i], g = src[i + 1], b = src[i + 2];
+      const L = lum[p], wm = mask[i] / 255, mm = mask[i + 2] / 255, gl = glow[i] / 255;
+      const cita = o.panel === 'cita', sm = cita ? glow[i + 1] / 255 : mask[i + 1] / 255; // slats cover the whole panel face, frame included
+      if (sm > 0 && o.panel !== 'mermer') {
+        const x = p % 1200;
+        let c;
+        if (o.panel === 'traverten') {
+          const y = (p / 1200) | 0;
+          c = ramp(TRAV, clamp((L - .5) / .45) * (1 + .035 * Math.sin(y * .21 + Math.sin(x * .013) * 2)));
+        } else { // slats across the panel, lit as the stone was
+          const k = Math.min(1.15, L / .84), n = (x / 13) | 0, u = (x % 13) / 13;
+          c = ramp(wood, (u < .68 ? .58 + ((n * 37) % 11) / 90 : .1) * k);
+        }
+        r = lerp(r, c[0], sm); g = lerp(g, c[1], sm); b = lerp(b, c[2], sm);
+      }
+      if (wm > 0 && o.body !== 'ceviz') {
+        const c = ramp(wood, clamp((L - .04) / .42));
+        r = lerp(r, c[0], wm); g = lerp(g, c[1], wm); b = lerp(b, c[2], wm);
+      }
+      if (mm > 0 && o.metal === 'siyah' && !cita) {
+        const c = ramp(BLACK, clamp(L));
+        r = lerp(r, c[0], mm); g = lerp(g, c[1], mm); b = lerp(b, c[2], mm);
+      }
+      if (gl > 0 && !o.led) { // without the LED: darker and no longer amber
+        const k = 1 - .74 * gl, a = (r + g + b) / 3, q = .55 * gl;
+        r = lerp(r, a, q) * k; g = lerp(g, a, q) * k; b = lerp(b, a, q) * k + 3 * gl;
+      }
+      d[i] = r; d[i + 1] = g; d[i + 2] = b; d[i + 3] = 255;
+    }
+    return out;
+  }
+  function show() {
+    const o = options(), cm = new FormData(cfgForm).get('w');
+    if (dim.textContent !== cm + ' cm') { dim.textContent = cm + ' cm'; dim.classList.add('bump'); setTimeout(() => dim.classList.remove('bump'), 220); }
+    cap.textContent = `${NAMES.body[o.body]} · ${NAMES.panel[o.panel]} · ${NAMES.metal[o.metal]} · LED ${o.led ? 'açık' : 'kapalı'}`;
+    const key = JSON.stringify(o);
+    if (!src || key === shown) return;
+    shown = key;
+    if (busy) busy(); // a wipe is still running: settle it first
+    const img = render(o);
+    if (reduce) { now.getContext('2d').putImageData(img, 0, 0); return; }
+    next.getContext('2d').putImageData(img, 0, 0);
+    next.classList.remove('go'); seam.classList.remove('go'); void next.offsetWidth;
+    next.classList.add('go'); seam.classList.add('go');
+    const done = () => { busy = null; now.getContext('2d').drawImage(next, 0, 0); next.classList.remove('go'); seam.classList.remove('go'); };
+    const timer = setTimeout(done, 850);
+    busy = () => { clearTimeout(timer); done(); };
+  }
+  cfgForm.addEventListener('input', show);
+  new IntersectionObserver(([e], io) => {
+    if (!e.isIntersecting) return;
+    io.disconnect();
+    Promise.all([pixels('img/tasarla.webp'), pixels('img/tasarla-mask.png'), pixels('img/tasarla-glow.png')]).then(([a, m, g]) => {
+      src = a; mask = m; glow = g; lum = new Float32Array(N);
+      for (let p = 0, i = 0; p < N; p++, i += 4) lum[p] = (.299 * a[i] + .587 * a[i + 1] + .114 * a[i + 2]) / 255;
+      shown = JSON.stringify(options());
+      now.getContext('2d').putImageData(render(options()), 0, 0);
+      view.classList.add('live');
+    }).catch(() => {}); // the plain photo stays
+  }, { rootMargin: '400px 0px' }).observe(view);
 })();
 </script>
 

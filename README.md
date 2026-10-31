@@ -30,23 +30,26 @@ scrubbed by scroll over film seconds 0–12, telling Arkhera's own process:
 - The whole stage pushes in slightly (scale 1.07 → 1). Chapter captions use `data-from`/`data-to`
   in film seconds; annotation tags use `data-d` / `data-m`, a point on the desktop / phone image as
   fractions of its width and height. Re-place them when the images change.
-- The site loads no 3D library: everything is images and canvas.
+- The opener is images only; three.js loads only when "Ünite tasarla" comes near the screen.
 - `prefers-reduced-motion`, no JS, or `?still` show the dusk frame and the four chapters as text.
 
 ## Other sections
 
 - Stüdyo, Projeler (sideways scroll on wide screens with a mouse, native swipe elsewhere),
   Hizmetler (the row in the middle of the screen lights up and swaps the picture).
-- **Ünite tasarla**: the opener's real TV wall photo (`img/tasarla.webp`, from `tools/stills.py`),
-  changed in the browser for the options (body, centre panel, metal, LED); each change wipes in behind
-  the opener's brass line, and the width shows on a dimension line. "Teklif al" opens WhatsApp with the choice.
-  - Masks (`tools/masks.py` → `img/tasarla-mask.png`, `img/tasarla-glow.png`): wood (slats and cabinet,
-    with the vases, plant, books and armchair kept out), stone, the brass frame (lines fitted to the
-    photo's brass), the LED light and the whole panel face.
-  - Finishes are albedo swaps: each pixel keeps its light (brightness over average walnut) and takes
-    the new surface colour, so shadows and highlights stay. Lacquer keeps gaps and shadows but drops
-    the grain. Travertine (`tools/materials.py`, generated) is lit by the marble's light with the veins
-    blurred out. Slats on the panel are the photo's own slats from the right column, relit for the panel.
+- **Ünite tasarla**: a three.js configurator after the Maviron one (three r180 from jsDelivr, the
+  module at the end of `arkhera.html`). The opener's TV wall is rebuilt from the options: narrow slat
+  column, stone panel with an inset metal frame and the TV, wide slat column, a full-width floating
+  cabinet of drawers (one per ~60 cm) with LED light under it, the ring vase, the plant and books.
+  - It sways slowly like a turntable until touched; drag or use the arrow keys to turn it. Material
+    changes wipe in behind the opener's brass line, the width eases, the LED fades. Width and height
+    show as dimension lines with tags placed on their 3D points.
+  - Materials: oak veneer (Poly Haven oak_veneer_01, CC0, `img/tex/oak-*`, as in Maviron), tinted to
+    walnut; lacquer; a generated Calacatta slab and travertine (`tools/materials.py`); herringbone
+    parquet (Poly Haven herringbone_parquet, CC0, `img/tex/floor-*`). Ambient occlusion (GTAO) on
+    screens wider than 760 px.
+  - The real photo (`img/tasarla.webp`, `tools/stills.py`) shows until the scene is ready, and stays
+    without WebGL2. The summary and the WhatsApp message work either way.
 - "İç mimari proje ve 3D tasarım" shows the white model and the finished room split down the middle
   (`img/render-split.webp`, `tools/stills.py`).
 - Contact form writes a WhatsApp message (no server).
